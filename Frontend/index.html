@@ -1,0 +1,3173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CloudLens — AWS Cost Intelligence</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,5 95,27.5 95,72.5 50,95 5,72.5 5,27.5' fill='%230ea5e9'/><text y='.9em' font-size='60' x='22' fill='white'>☁</text></svg>" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --void: #030508;
+      --base: #07090f;
+      --ink: #0b0e18;
+      --depth: #0e1220;
+      --panel: #111828;
+      --surface: #161e2e;
+      --lift: #1b2438;
+      --rim0: rgba(255, 255, 255, 0.04);
+      --rim1: rgba(255, 255, 255, 0.07);
+      --rim2: rgba(255, 255, 255, 0.12);
+      --rim3: rgba(255, 255, 255, 0.18);
+      --sky: #0ea5e9;
+      --sky-dim: rgba(14, 165, 233, 0.12);
+      --sky-glo: rgba(14, 165, 233, 0.22);
+      --sky-mist: rgba(14, 165, 233, 0.06);
+      --teal: #0f766e;
+      --teal-dim: rgba(15, 118, 110, 0.12);
+      --ember: #fb923c;
+      --ember-dim: rgba(251, 146, 60, 0.12);
+      --rose: #f472b6;
+      --rose-dim: rgba(244, 114, 182, 0.12);
+      --lime: #a3e635;
+      --lime-dim: rgba(163, 230, 53, 0.1);
+      --gold: #fcd34d;
+      --gold-dim: rgba(252, 211, 77, 0.1);
+      --violet: #c084fc;
+      --red: #f87171;
+      --red-dim: rgba(248, 113, 113, 0.12);
+      --tx0: #f8fafc;
+      --tx1: #94a3b8;
+      --tx2: #475569;
+      --tx3: #1e2d40;
+      --display: 'Outfit', sans-serif;
+      --body: 'Inter', sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+      --r1: 6px;
+      --r2: 10px;
+      --r3: 14px;
+      --r4: 18px;
+      --r5: 22px;
+      --sh1: 0 1px 3px rgba(0, 0, 0, .5);
+      --sh2: 0 4px 16px rgba(0, 0, 0, .55);
+      --sh3: 0 10px 40px rgba(0, 0, 0, .65);
+      --sh-sky: 0 0 50px rgba(14, 165, 233, .1);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    html {
+      scroll-behavior: smooth
+    }
+
+    body {
+      font-family: var(--body);
+      background: var(--void);
+      color: var(--tx0);
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='250'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='250' height='250' filter='url(%23g)' opacity='0.032'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+      opacity: .55
+    }
+
+    #loader {
+      position: fixed;
+      inset: 0;
+      background: var(--void);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9990;
+      transition: opacity .6s ease, visibility .6s ease
+    }
+
+    #loader.out {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none
+    }
+
+    .ld-mark {
+      width: 56px;
+      height: 56px;
+      margin-bottom: 32px;
+      position: relative;
+      animation: ldPop .7s cubic-bezier(.16, 1, .3, 1) both
+    }
+
+    @keyframes ldPop {
+      from {
+        opacity: 0;
+        transform: scale(.6)
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1)
+      }
+    }
+
+    .ld-hex {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, var(--sky), var(--teal));
+      clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 0 40px rgba(96, 184, 245, .4), 0 0 80px rgba(96, 184, 245, .15);
+      animation: ldPulse 2s ease infinite
+    }
+
+    @keyframes ldPulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 40px rgba(96, 184, 245, .4), 0 0 80px rgba(96, 184, 245, .15)
+      }
+
+      50% {
+        box-shadow: 0 0 60px rgba(96, 184, 245, .6), 0 0 120px rgba(96, 184, 245, .25)
+      }
+    }
+
+    .ld-name {
+      font-family: var(--display);
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 28px;
+      animation: ldPop .7s .1s cubic-bezier(.16, 1, .3, 1) both
+    }
+
+    .ld-track {
+      width: 180px;
+      height: 1px;
+      background: var(--rim1);
+      border-radius: 1px;
+      overflow: visible;
+      position: relative;
+      margin-bottom: 14px
+    }
+
+    .ld-bar {
+      height: 1px;
+      background: linear-gradient(90deg, var(--sky), var(--teal));
+      border-radius: 1px;
+      width: 0;
+      animation: ldFill 2s cubic-bezier(.4, 0, .2, 1) .3s forwards;
+      box-shadow: 0 0 8px var(--sky)
+    }
+
+    @keyframes ldFill {
+      0% {
+        width: 0
+      }
+
+      40% {
+        width: 60%
+      }
+
+      100% {
+        width: 100%
+      }
+    }
+
+    .ld-tip {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--tx2);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      animation: ldPop .7s .2s cubic-bezier(.16, 1, .3, 1) both
+    }
+
+    #auth {
+      min-height: 100vh;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden
+    }
+
+    #auth.show {
+      display: flex;
+    }
+
+    .auth-bg {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 900px 700px at 65% 15%, rgba(96, 184, 245, .055) 0%, transparent 65%), radial-gradient(ellipse 700px 700px at 15% 85%, rgba(45, 212, 191, .04) 0%, transparent 65%), radial-gradient(ellipse 500px 500px at 85% 70%, rgba(196, 132, 252, .025) 0%, transparent 70%)
+    }
+
+    .auth-grid {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(rgba(96, 184, 245, .025) 1px, transparent 1px), linear-gradient(90deg, rgba(96, 184, 245, .025) 1px, transparent 1px);
+      background-size: 52px 52px;
+      mask-image: radial-gradient(ellipse 85% 85% at 50% 50%, black, transparent)
+    }
+
+    .aurora {
+      position: absolute;
+      pointer-events: none;
+      filter: blur(100px);
+      border-radius: 50%;
+      animation: auroraMove 12s ease-in-out infinite
+    }
+
+    .a1 {
+      width: 600px;
+      height: 300px;
+      background: rgba(96, 184, 245, .07);
+      top: -100px;
+      right: -100px;
+      animation-delay: 0s
+    }
+
+    .a2 {
+      width: 400px;
+      height: 400px;
+      background: rgba(45, 212, 191, .05);
+      bottom: -100px;
+      left: -50px;
+      animation-delay: -5s
+    }
+
+    .a3 {
+      width: 300px;
+      height: 300px;
+      background: rgba(244, 114, 182, .035);
+      top: 40%;
+      right: 30%;
+      animation-delay: -3s
+    }
+
+    @keyframes auroraMove {
+
+      0%,
+      100% {
+        transform: translate(0, 0) rotate(0deg)
+      }
+
+      33% {
+        transform: translate(30px, -20px) rotate(5deg)
+      }
+
+      66% {
+        transform: translate(-20px, 15px) rotate(-3deg)
+      }
+    }
+
+    .auth-card {
+      position: relative;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: 1fr;
+      width: 460px;
+      max-width: 96vw;
+      background: var(--panel);
+      border: 1px solid var(--rim1);
+      border-radius: var(--r5);
+      overflow: hidden;
+      box-shadow: var(--sh3), var(--sh-sky), inset 0 1px 0 var(--rim3);
+      animation: authIn .8s cubic-bezier(.16, 1, .3, 1) both
+    }
+
+    @keyframes authIn {
+      from {
+        opacity: 0;
+        transform: translateY(32px) scale(.97)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1)
+      }
+    }
+
+    .auth-left {
+      display: none
+    }
+
+    .al-hex {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--sky), var(--teal));
+      clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 6px 20px rgba(96, 184, 245, .35);
+      flex-shrink: 0
+    }
+
+    .auth-right {
+      padding: 44px 38px;
+      display: flex;
+      flex-direction: column
+    }
+
+    .ar-tabs {
+      display: flex;
+      background: var(--depth);
+      border: 1px solid var(--rim1);
+      border-radius: var(--r2);
+      padding: 3px;
+      margin-bottom: 28px
+    }
+
+    .ar-tab {
+      flex: 1;
+      padding: 8px;
+      text-align: center;
+      font-family: var(--display);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all .22s;
+      color: var(--tx2);
+      letter-spacing: .2px
+    }
+
+    .ar-tab.active {
+      background: var(--surface);
+      color: var(--tx0);
+      box-shadow: var(--sh1)
+    }
+
+    .ar-title {
+      font-family: var(--display);
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -.6px;
+      margin-bottom: 4px
+    }
+
+    .ar-sub {
+      font-size: 13px;
+      color: var(--tx1);
+      margin-bottom: 24px
+    }
+
+    .fg {
+      margin-bottom: 14px
+    }
+
+    .fl {
+      display: block;
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 500;
+      color: var(--tx2);
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      margin-bottom: 6px
+    }
+
+    .fi {
+      width: 100%;
+      background: var(--depth);
+      border: 1px solid var(--rim1);
+      border-radius: var(--r2);
+      padding: 10px 14px;
+      color: var(--tx0);
+      font-family: var(--body);
+      font-size: 14px;
+      outline: none;
+      transition: all .18s
+    }
+
+    .fi::placeholder {
+      color: var(--tx2)
+    }
+
+    .fi:focus {
+      border-color: rgba(96, 184, 245, .5);
+      background: var(--surface);
+      box-shadow: 0 0 0 3px rgba(96, 184, 245, .08), inset 0 1px 0 rgba(255, 255, 255, .03)
+    }
+
+    .fi.err {
+      border-color: rgba(248, 113, 113, .5);
+      box-shadow: 0 0 0 3px rgba(248, 113, 113, .07)
+    }
+
+    .fe {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--red);
+      margin-top: 4px;
+      display: none
+    }
+
+    .fe.show {
+      display: block
+    }
+
+    .fr2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, var(--sky), #0284c7);
+      border: none;
+      border-radius: var(--r2);
+      color: #ffffff;
+      font-family: var(--display);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .2s;
+      position: relative;
+      overflow: hidden;
+      letter-spacing: .2px;
+      margin-top: 4px
+    }
+
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, .18) 0%, transparent 55%)
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 28px rgba(96, 184, 245, .4)
+    }
+
+    .btn-primary:active {
+      transform: none
+    }
+
+    .btn-primary.loading .bt {
+      display: none
+    }
+
+    .btn-primary.loading .bs {
+      display: block
+    }
+
+    .bs {
+      display: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(6, 12, 24, .3);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      margin: 0 auto
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    .af-alert {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 14px;
+      border-radius: var(--r2);
+      margin-bottom: 14px;
+      font-size: 13px
+    }
+
+    .af-alert.show {
+      display: flex
+    }
+
+    .af-alert.err-a {
+      background: var(--red-dim);
+      border: 1px solid rgba(248, 113, 113, .2);
+      color: #fca5a5
+    }
+
+    .af-alert.ok-a {
+      background: var(--teal-dim);
+      border: 1px solid rgba(45, 212, 191, .2);
+      color: var(--teal)
+    }
+
+    .ar-foot {
+      text-align: center;
+      margin-top: 14px;
+      font-size: 12px;
+      color: var(--tx2)
+    }
+
+    .ar-foot a {
+      color: var(--sky);
+      text-decoration: none;
+      cursor: pointer
+    }
+
+    .ar-foot a:hover {
+      text-decoration: underline
+    }
+
+    #app {
+      display: none;
+      min-height: 100vh
+    }
+
+    #app.on {
+      display: flex
+    }
+
+    .sb {
+      width: 236px;
+      background: var(--ink);
+      border-right: 1px solid var(--rim0);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 200;
+      transition: transform .32s cubic-bezier(.16, 1, .3, 1)
+    }
+
+    .sb-head {
+      padding: 18px 16px;
+      border-bottom: 1px solid var(--rim0);
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .sb-hex {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--sky), var(--teal));
+      clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      box-shadow: 0 4px 14px rgba(96, 184, 245, .3);
+      flex-shrink: 0
+    }
+
+    .sb-brand {
+      font-family: var(--display);
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -.2px
+    }
+
+    .sb-ver {
+      margin-left: auto;
+      font-family: var(--mono);
+      font-size: 8px;
+      color: var(--tx3);
+      letter-spacing: .5px
+    }
+
+    .sb-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 8px;
+      scrollbar-width: none
+    }
+
+    .sb-body::-webkit-scrollbar {
+      display: none
+    }
+
+    .sb-sec {
+      font-family: var(--mono);
+      font-size: 8px;
+      font-weight: 500;
+      color: var(--tx3);
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      padding: 0 8px;
+      margin: 18px 0 5px
+    }
+
+    .sb-sec:first-child {
+      margin-top: 2px
+    }
+
+    .ni {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 10px;
+      border-radius: var(--r2);
+      cursor: pointer;
+      color: var(--tx1);
+      font-size: 13px;
+      font-weight: 500;
+      transition: all .16s;
+      margin-bottom: 1px;
+      user-select: none;
+      position: relative
+    }
+
+    .ni:hover {
+      background: var(--surface);
+      color: var(--tx0)
+    }
+
+    .ni.act {
+      background: var(--sky-mist);
+      color: var(--sky);
+      border: 1px solid rgba(96, 184, 245, .1)
+    }
+
+    .ni.act::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 20%;
+      bottom: 20%;
+      width: 2px;
+      background: var(--sky);
+      border-radius: 0 2px 2px 0;
+      box-shadow: 0 0 8px var(--sky)
+    }
+
+    .ni-ico {
+      width: 16px;
+      text-align: center;
+      font-size: 13px;
+      flex-shrink: 0
+    }
+
+    .ni-badge {
+      margin-left: auto;
+      font-family: var(--mono);
+      font-size: 8px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      flex-shrink: 0
+    }
+
+    .bd-r {
+      background: rgba(248, 113, 113, .18);
+      color: var(--red)
+    }
+
+    .bd-g {
+      background: rgba(45, 212, 191, .14);
+      color: var(--teal)
+    }
+
+    .bd-b {
+      background: var(--sky-dim);
+      color: var(--sky)
+    }
+
+    .sb-foot {
+      padding: 10px 8px;
+      border-top: 1px solid var(--rim0)
+    }
+
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 10px;
+      border-radius: var(--r2);
+      background: var(--surface);
+      border: 1px solid var(--rim0);
+      cursor: pointer;
+      transition: border-color .2s
+    }
+
+    .user-card:hover {
+      border-color: var(--rim1)
+    }
+
+    .user-av {
+      width: 30px;
+      height: 30px;
+      background: linear-gradient(135deg, var(--sky), var(--teal));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #ffffff;
+      flex-shrink: 0;
+      font-family: var(--display)
+    }
+
+    .user-nm {
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: var(--display)
+    }
+
+    .user-rl {
+      font-size: 9px;
+      color: var(--tx2);
+      font-family: var(--mono)
+    }
+
+    .logout-btn {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: var(--tx2);
+      cursor: pointer;
+      font-size: 14px;
+      transition: color .2s;
+      flex-shrink: 0;
+      padding: 2px
+    }
+
+    .logout-btn:hover {
+      color: var(--red)
+    }
+
+    .tb {
+      height: 56px;
+      background: rgba(7, 9, 15, .8);
+      border-bottom: 1px solid var(--rim0);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      padding: 0 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100
+    }
+
+    .tb-left {
+      display: flex;
+      align-items: center;
+      gap: 12px
+    }
+
+    .ham {
+      display: none;
+      background: none;
+      border: 1px solid var(--rim1);
+      border-radius: var(--r1);
+      padding: 5px 8px;
+      color: var(--tx1);
+      cursor: pointer;
+      font-size: 14px;
+      transition: all .2s
+    }
+
+    .ham:hover {
+      border-color: var(--rim2);
+      color: var(--tx0)
+    }
+
+    .bc {
+      display: none
+    }
+
+    .env-selector {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--surface);
+      border: 1px solid var(--rim1);
+      padding: 6px 14px;
+      border-radius: var(--r2);
+      cursor: pointer;
+      transition: all .2s;
+      user-select: none;
+      margin-left: 4px
+    }
+
+    .env-selector:hover {
+      border-color: rgba(96, 184, 245, .3);
+      background: var(--sky-mist);
+      box-shadow: 0 2px 8px rgba(96, 184, 245, .05)
+    }
+
+    .env-ico {
+      font-size: 16px
+    }
+
+    .env-info {
+      display: flex;
+      flex-direction: column
+    }
+
+    .env-lbl {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--sky);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 1px
+    }
+
+    .env-val {
+      font-family: var(--display);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--tx0);
+      letter-spacing: -.2px
+    }
+
+    .env-arr {
+      font-size: 8px;
+      color: var(--tx2);
+      margin-left: 12px;
+      transition: color .2s
+    }
+
+    .env-selector:hover .env-arr {
+      color: var(--tx1)
+    }
+
+    .tb-right {
+      display: flex;
+      align-items: center;
+      gap: 7px
+    }
+
+    .live-chip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      background: rgba(45, 212, 191, .07);
+      border: 1px solid rgba(45, 212, 191, .15);
+      border-radius: 20px;
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--teal);
+      letter-spacing: 1px
+    }
+
+    .live-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--teal);
+      box-shadow: 0 0 8px var(--teal);
+      animation: lp 2s ease infinite
+    }
+
+    @keyframes lp {
+
+      0%,
+      100% {
+        opacity: 1;
+        box-shadow: 0 0 8px var(--teal)
+      }
+
+      50% {
+        opacity: .4;
+        box-shadow: 0 0 3px var(--teal)
+      }
+    }
+
+    .tb-btn {
+      background: var(--surface);
+      border: 1px solid var(--rim1);
+      border-radius: var(--r1);
+      padding: 6px 12px;
+      font-family: var(--body);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--tx1);
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap
+    }
+
+    .tb-btn:hover {
+      border-color: var(--rim2);
+      color: var(--tx0);
+      background: var(--lift)
+    }
+
+    .tb-btn.hi {
+      background: var(--sky-dim);
+      border-color: rgba(96, 184, 245, .2);
+      color: var(--sky)
+    }
+
+    .tb-btn.hi:hover {
+      background: rgba(96, 184, 245, .15);
+      border-color: rgba(96, 184, 245, .35)
+    }
+
+    .main {
+      margin-left: 236px;
+      flex: 1;
+      display: flex;
+      flex-direction: column
+    }
+
+    .content {
+      padding: 22px;
+      flex: 1
+    }
+
+    .page {
+      display: none;
+      animation: pgIn .3s ease both
+    }
+
+    .page.on {
+      display: block
+    }
+
+    @keyframes pgIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 18px
+    }
+
+    .kpi {
+      background: var(--panel);
+      border: 1px solid var(--rim0);
+      border-radius: var(--r4);
+      padding: 18px 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .2s, transform .2s, box-shadow .2s;
+      animation: kIn .5s cubic-bezier(.16, 1, .3, 1) both;
+      cursor: default
+    }
+
+    .kpi:nth-child(1) {
+      animation-delay: .05s
+    }
+
+    .kpi:nth-child(2) {
+      animation-delay: .1s
+    }
+
+    .kpi:nth-child(3) {
+      animation-delay: .15s
+    }
+
+    .kpi:nth-child(4) {
+      animation-delay: .2s
+    }
+
+    @keyframes kIn {
+      from {
+        opacity: 0;
+        transform: translateY(14px)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+
+    .kpi:hover {
+      border-color: var(--rim1);
+      transform: translateY(-2px);
+      box-shadow: var(--sh2)
+    }
+
+    .kpi::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: var(--kg, var(--sky));
+      opacity: .7
+    }
+
+    .kpi::before {
+      content: '';
+      position: absolute;
+      top: -40px;
+      right: -40px;
+      width: 160px;
+      height: 160px;
+      background: radial-gradient(circle, var(--kglow, rgba(96, 184, 245, .06)) 0%, transparent 70%);
+      pointer-events: none
+    }
+
+    .kpi-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 14px
+    }
+
+    .kpi-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--r2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      background: var(--kibg, var(--sky-dim))
+    }
+
+    .kpi-badge {
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 500;
+      padding: 3px 7px;
+      border-radius: 5px;
+      letter-spacing: .3px
+    }
+
+    .bup {
+      background: var(--red-dim);
+      color: var(--red)
+    }
+
+    .bdn {
+      background: var(--teal-dim);
+      color: var(--teal)
+    }
+
+    .bnt {
+      background: var(--sky-dim);
+      color: var(--sky)
+    }
+
+    .kpi-val {
+      font-family: var(--display);
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1;
+      margin-bottom: 3px;
+      color: var(--kc, var(--tx0))
+    }
+
+    .kpi-lbl {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--tx0);
+      opacity: 0.85;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 6px
+    }
+
+    .kpi-bar {
+      height: 2px;
+      background: var(--depth);
+      border-radius: 2px;
+      margin-top: 14px;
+      overflow: hidden
+    }
+
+    .kpi-fill {
+      height: 100%;
+      background: var(--kg, var(--sky));
+      border-radius: 2px;
+      transition: width 1.3s cubic-bezier(.16, 1, .3, 1)
+    }
+
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1.7fr 1fr;
+      gap: 12px;
+      margin-bottom: 18px
+    }
+
+    .cpanel {
+      background: var(--panel);
+      border: 1px solid var(--rim0);
+      border-radius: var(--r4);
+      padding: 20px 22px;
+      animation: kIn .5s cubic-bezier(.16, 1, .3, 1) .22s both
+    }
+
+    .cp-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 18px
+    }
+
+    .cp-title {
+      font-family: var(--display);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -.2px
+    }
+
+    .cp-sub {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--tx1);
+      margin-top: 4px;
+      letter-spacing: .5px
+    }
+
+    .legend {
+      display: flex;
+      align-items: center;
+      gap: 14px
+    }
+
+    .leg-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--tx1)
+    }
+
+    .leg-line {
+      width: 14px;
+      height: 2px;
+      border-radius: 1px
+    }
+
+    .leg-dash {
+      width: 14px;
+      height: 0;
+      border-top: 2px dashed;
+      opacity: .7
+    }
+
+    .cg {
+      stroke: var(--rim1);
+      stroke-width: 1
+    }
+
+    .axl {
+      fill: var(--tx2);
+      font-family: 'DM Mono', monospace;
+      font-size: 9.5px
+    }
+
+    .area-fill {
+      fill: url(#ag)
+    }
+
+    .ln-main {
+      fill: none;
+      stroke: var(--sky);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .ln-fore {
+      fill: none;
+      stroke: var(--teal);
+      stroke-width: 1.5;
+      stroke-dasharray: 5 3;
+      stroke-linecap: round
+    }
+
+    .dot-a {
+      fill: var(--sky);
+      stroke: var(--panel);
+      stroke-width: 2.5;
+      transition: r .2s;
+      cursor: pointer
+    }
+
+    .dot-b {
+      fill: var(--teal);
+      stroke: var(--panel);
+      stroke-width: 2;
+      cursor: pointer
+    }
+
+    .dot-a:hover {
+      r: 6
+    }
+
+    .donut-wrap {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      padding: 4px 0
+    }
+
+    .donut-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center
+    }
+
+    .donut-big {
+      font-family: var(--display);
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -.5px;
+      color: var(--sky)
+    }
+
+    .donut-sm {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--tx1);
+      letter-spacing: 1px;
+      text-transform: uppercase
+    }
+
+    .dl {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      flex: 1
+    }
+
+    .dl-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--tx1)
+    }
+
+    .dl-sw {
+      width: 7px;
+      height: 7px;
+      border-radius: 2px;
+      flex-shrink: 0
+    }
+
+    .dl-pct {
+      margin-left: auto;
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--tx0);
+      font-weight: 500
+    }
+
+    .tpanel {
+      background: var(--panel);
+      border: 1px solid var(--rim0);
+      border-radius: var(--r4);
+      overflow: hidden;
+      animation: kIn .5s cubic-bezier(.16, 1, .3, 1) .28s both;
+      margin-bottom: 18px
+    }
+
+    .tp-head {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--rim0);
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
+
+    .tp-title {
+      font-family: var(--display);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -.2px
+    }
+
+    .chip-row {
+      display: flex;
+      gap: 5px
+    }
+
+    .chip {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--rim0);
+      background: var(--depth);
+      color: var(--tx1);
+      cursor: pointer;
+      transition: all .18s;
+      letter-spacing: .3px
+    }
+
+    .chip:hover {
+      border-color: var(--rim1);
+      color: var(--tx1)
+    }
+
+    .chip.on {
+      background: var(--sky-dim);
+      border-color: rgba(96, 184, 245, .22);
+      color: var(--sky)
+    }
+
+    .dtbl {
+      width: 100%;
+      border-collapse: collapse
+    }
+
+    .dtbl th {
+      padding: 10px 16px;
+      text-align: left;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--tx1);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      background: var(--depth);
+      border-bottom: 1px solid var(--rim0)
+    }
+
+    .dtbl td {
+      padding: 12px 16px;
+      font-size: 12px;
+      border-bottom: 1px solid var(--rim1);
+      transition: background .1s
+    }
+
+    .dtbl tr:last-child td {
+      border-bottom: none
+    }
+
+    .dtbl tr:hover td {
+      background: var(--surface)
+    }
+
+    .rid {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--sky);
+      font-weight: 500
+    }
+
+    .rtype {
+      font-size: 9px;
+      color: var(--tx2);
+      margin-top: 2px;
+      font-family: var(--mono)
+    }
+
+    .sev-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-family: var(--mono);
+      font-size: 8px;
+      font-weight: 500;
+      letter-spacing: .5px;
+      text-transform: uppercase
+    }
+
+    .sv-h {
+      background: var(--red-dim);
+      color: #fca5a5;
+      border: 1px solid rgba(248, 113, 113, .15)
+    }
+
+    .sv-m {
+      background: var(--gold-dim);
+      color: var(--gold);
+      border: 1px solid rgba(252, 211, 77, .15)
+    }
+
+    .sv-l {
+      background: var(--teal-dim);
+      color: var(--teal);
+      border: 1px solid rgba(45, 212, 191, .13)
+    }
+
+    .sav-val {
+      font-family: var(--display);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--teal)
+    }
+
+    .sav-unit {
+      font-family: var(--mono);
+      font-size: 8px;
+      color: var(--tx2);
+      margin-left: 1px
+    }
+
+    .util-bar {
+      height: 3px;
+      background: var(--depth);
+      border-radius: 3px;
+      width: 68px;
+      overflow: hidden
+    }
+
+    .util-fill {
+      height: 100%;
+      border-radius: 3px
+    }
+
+    .act-btn {
+      font-family: var(--mono);
+      font-size: 9px;
+      padding: 5px 12px;
+      border-radius: 4px;
+      border: 1px solid var(--rim1);
+      background: var(--depth);
+      color: var(--tx1);
+      cursor: pointer;
+      transition: all .2s;
+      letter-spacing: .3px
+    }
+
+    .act-btn:hover {
+      border-color: rgba(96, 184, 245, .3);
+      color: var(--sky);
+      background: var(--sky-mist)
+    }
+
+    .act-btn:disabled {
+      color: var(--teal);
+      border-color: rgba(45, 212, 191, .2);
+      background: rgba(45, 212, 191, .05);
+      cursor: default
+    }
+
+    .notif-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(96, 184, 245, .04);
+      border: 1px solid rgba(96, 184, 245, .12);
+      border-radius: var(--r3);
+      padding: 11px 15px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: var(--tx1);
+      animation: kIn .4s ease both
+    }
+
+    .notif-hl {
+      color: var(--sky);
+      font-weight: 600
+    }
+
+    .notif-x {
+      margin-left: auto;
+      cursor: pointer;
+      color: var(--tx3);
+      font-size: 13px;
+      transition: color .2s;
+      flex-shrink: 0
+    }
+
+    .notif-x:hover {
+      color: var(--tx0)
+    }
+
+    .alert {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 15px;
+      border-radius: var(--r2);
+      margin-bottom: 16px;
+      font-size: 13px;
+      animation: kIn .3s ease both
+    }
+
+    .a-info {
+      background: rgba(96, 184, 245, .04);
+      border: 1px solid rgba(96, 184, 245, .14);
+      color: #93c5fd
+    }
+
+    .a-warn {
+      background: var(--gold-dim);
+      border: 1px solid rgba(252, 211, 77, .14);
+      color: var(--gold)
+    }
+
+    .a-danger {
+      background: var(--red-dim);
+      border: 1px solid rgba(248, 113, 113, .14);
+      color: #fca5a5
+    }
+
+    .a-ok {
+      background: var(--teal-dim);
+      border: 1px solid rgba(45, 212, 191, .14);
+      color: var(--teal)
+    }
+
+    .sec-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px
+    }
+
+    .sec-ttl {
+      font-family: var(--display);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -.2px
+    }
+
+    .sec-cnt {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--tx1);
+      margin-left: 8px
+    }
+
+    .svc-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 18px
+    }
+
+    .svc-card {
+      background: var(--panel);
+      border: 1px solid var(--rim0);
+      border-radius: var(--r4);
+      padding: 16px 18px;
+      transition: all .2s;
+      cursor: default;
+      position: relative;
+      overflow: hidden
+    }
+
+    .svc-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: var(--sc, var(--sky));
+      opacity: .5
+    }
+
+    .svc-card:hover {
+      border-color: var(--rim1);
+      transform: translateY(-2px);
+      box-shadow: var(--sh1)
+    }
+
+    .svc-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px
+    }
+
+    .svc-ico {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--r2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      flex-shrink: 0
+    }
+
+    .svc-name {
+      font-family: var(--display);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -.2px
+    }
+
+    .svc-cat {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--tx1);
+      letter-spacing: .5px;
+      text-transform: uppercase
+    }
+
+    .svc-amt {
+      font-family: var(--display);
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -.5px
+    }
+
+    .svc-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px
+    }
+
+    .svc-rgn {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--tx2)
+    }
+
+    .prog {
+      height: 3px;
+      background: var(--depth);
+      border-radius: 3px;
+      overflow: hidden
+    }
+
+    .prog-fill {
+      height: 100%;
+      border-radius: 3px
+    }
+
+    .bprog {
+      width: 88px
+    }
+
+    .alert-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: var(--panel);
+      border: 1px solid var(--rim0);
+      border-radius: var(--r3);
+      padding: 14px 16px;
+      transition: border-color .2s
+    }
+
+    .alert-item:hover {
+      border-color: var(--rim1)
+    }
+
+    .ai-time {
+      margin-left: auto;
+      font-family: var(--mono);
+      font-size: 8px;
+      color: var(--tx2);
+      flex-shrink: 0;
+      letter-spacing: .3px;
+      white-space: nowrap
+    }
+
+    .ai-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 3px
+    }
+
+    .ai-body {
+      font-size: 11px;
+      color: var(--tx1);
+      line-height: 1.5
+    }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .6);
+      backdrop-filter: blur(4px);
+      z-index: 150
+    }
+
+    .overlay.on {
+      display: block
+    }
+
+    #heatmap {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px
+    }
+
+    @media(max-width:1120px) {
+      .kpi-grid {
+        grid-template-columns: repeat(2, 1fr)
+      }
+    }
+
+    @media(max-width:920px) {
+      .charts-row {
+        grid-template-columns: 1fr
+      }
+
+      .svc-grid {
+        grid-template-columns: repeat(2, 1fr)
+      }
+    }
+
+    @media(max-width:768px) {
+      .sb {
+        transform: translateX(-100%)
+      }
+
+      .sb.open {
+        transform: none
+      }
+
+      .main {
+        margin-left: 0
+      }
+
+      .ham {
+        display: flex
+      }
+
+      .content {
+        padding: 14px
+      }
+
+      .auth-card {
+        grid-template-columns: 1fr;
+        width: 95%
+      }
+
+      .auth-right {
+        padding: 34px 26px
+      }
+    }
+
+    @media(max-width:540px) {
+      .kpi-grid {
+        grid-template-columns: 1fr
+      }
+
+      .svc-grid {
+        grid-template-columns: 1fr
+      }
+
+      .dtbl th:nth-child(4),
+      .dtbl td:nth-child(4) {
+        display: none
+      }
+    }
+
+    /* ─── New Alert Modal ─────────────────────────────────────────────────── */
+    .mal-backdrop { display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);z-index:300;align-items:center;justify-content:center }
+    .mal-backdrop.on { display:flex }
+    .mal-box { background:var(--panel);border:1px solid var(--rim1);border-radius:var(--r4);padding:28px 32px;width:440px;max-width:95vw;box-shadow:var(--sh3);animation:authIn .35s cubic-bezier(.16,1,.3,1) both }
+    .mal-title { font-family:var(--display);font-size:17px;font-weight:800;letter-spacing:-.3px;margin-bottom:4px }
+    .mal-sub { font-size:12px;color:var(--tx1);margin-bottom:20px }
+    .mal-foot { display:flex;gap:10px;margin-top:20px;justify-content:flex-end }
+    .btn-ghost { padding:9px 18px;background:var(--depth);border:1px solid var(--rim1);border-radius:var(--r2);color:var(--tx1);font-family:var(--display);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s }
+    .btn-ghost:hover { border-color:var(--rim2);color:var(--tx0) }
+    .btn-create { padding:9px 18px;background:linear-gradient(135deg,var(--sky),#0284c7);border:none;border-radius:var(--r2);color:#fff;font-family:var(--display);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;position:relative;overflow:hidden }
+    .btn-create::before { content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.15) 0%,transparent 55%) }
+    .btn-create:hover { transform:translateY(-1px);box-shadow:0 6px 20px rgba(14,165,233,.4) }
+  </style>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+
+<body>
+
+  <div id="loader">
+    <div class="ld-mark">
+      <div class="ld-hex">⬡</div>
+    </div>
+    <div class="ld-name">CloudLens</div>
+    <div class="ld-track">
+      <div class="ld-bar"></div>
+    </div>
+    <div class="ld-tip">Initializing cost intelligence</div>
+  </div>
+
+  <div id="auth">
+    <div class="auth-bg"></div>
+    <div class="auth-grid"></div>
+    <div class="aurora a1"></div>
+    <div class="aurora a2"></div>
+    <div class="aurora a3"></div>
+    <div class="auth-card">
+      <div class="auth-left"></div>
+      <div class="auth-right">
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:32px">
+          <div class="al-hex" style="width:38px;height:38px;font-size:16px;box-shadow:0 5px 18px rgba(96,184,245,.35)">⬡
+          </div>
+          <div>
+            <div style="font-family:var(--display);font-size:19px;font-weight:800;letter-spacing:-.3px">CloudLens</div>
+            <div
+              style="font-family:var(--mono);font-size:8px;color:var(--sky);letter-spacing:2px;text-transform:uppercase;margin-top:1px">
+              AWS Cost Intelligence</div>
+          </div>
+        </div>
+        <div class="ar-title" id="formTitle">Welcome to CloudLens</div>
+        <div class="ar-sub" id="formSub">Sign in with Google to access your dashboard</div>
+        <div class="af-alert" id="authAlert"></div>
+
+        <!-- GOOGLE AUTH BUTTON -->
+        <div id="g_id_onload" data-client_id="472020276868-pu6kue623hl2utqjmuloe0rr8hj89pvq.apps.googleusercontent.com"
+          data-context="signin" data-ux_mode="popup" data-callback="handleCredentialResponse" data-auto_prompt="false">
+        </div>
+
+        <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline"
+          data-text="continue_with" data-size="large" data-logo_alignment="left"
+          style="margin-top: 10px; display: flex; justify-content: center;">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+  <!-- ── New Alert Modal ────────────────────────────────────────────────── -->
+  <div class="mal-backdrop" id="newAlertModal" onclick="if(event.target===this)closeNewAlertModal()">
+    <div class="mal-box">
+      <div class="mal-title" id="malTitle">🔔 Create New Alert</div>
+      <div class="mal-sub" id="malSub">Set a custom spend threshold to be alerted when costs exceed your limit.</div>
+      <div class="fg"><label class="fl">Alert Name</label><input class="fi" id="alertName" placeholder="e.g. EC2 Spend Spike" /></div>
+      <div class="fg"><label class="fl">Service</label>
+        <select class="fi" id="alertService" style="cursor:pointer">
+          <option value="Total AWS Spend">Total AWS Spend</option>
+          <option value="Amazon EC2">Amazon EC2</option>
+          <option value="Amazon S3">Amazon S3</option>
+          <option value="Amazon RDS">Amazon RDS</option>
+          <option value="AWS Lambda">AWS Lambda</option>
+          <option value="Amazon CloudFront">Amazon CloudFront</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Threshold (USD / month)</label><input class="fi" id="alertThreshold" type="number" placeholder="e.g. 500" min="1" /></div>
+      <div class="af-alert" id="newAlertErr" style="margin-bottom:0"></div>
+      <div class="mal-foot">
+        <button class="btn-ghost" onclick="closeNewAlertModal()">Cancel</button>
+        <button class="btn-create" onclick="createNewAlert()">Create Alert →</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="app">
+    <aside class="sb" id="sidebar">
+      <div class="sb-head">
+        <div class="sb-hex">⬡</div>
+        <span class="sb-brand">CloudLens</span>
+        <span class="sb-ver">v2.4</span>
+      </div>
+      <div class="sb-body">
+        <div class="sb-sec">Overview</div>
+        <div class="ni act" onclick="nav('dashboard',this)"><span class="ni-ico">◈</span>Dashboard</div>
+        <div class="ni" onclick="nav('analytics',this)"><span class="ni-ico">⟁</span>Analytics</div>
+        <div class="ni" onclick="nav('recommendations',this)"><span class="ni-ico">⚡</span>Recommendations<span
+            class="ni-badge bd-r" id="recsBadge">0</span></div>
+        <div class="sb-sec">Infrastructure</div>
+        <div class="ni" onclick="nav('services',this)"><span class="ni-ico">◻</span>Services</div>
+        <div class="ni" onclick="nav('regions',this)"><span class="ni-ico">◎</span>Regions<span
+            class="ni-badge bd-g" id="regionsBadge">4</span></div>
+        <div class="ni" onclick="nav('budgets',this)"><span class="ni-ico">◌</span>Budgets<span
+            class="ni-badge bd-b" id="budgetsBadge" style="display:none">0</span></div>
+        <div class="sb-sec">Monitoring</div>
+        <div class="ni" onclick="nav('alerts',this)"><span class="ni-ico">◬</span>Alerts<span
+            class="ni-badge bd-r" id="alertsBadge">3</span></div>
+        <div class="ni" onclick="nav('settings',this)"><span class="ni-ico">◍</span>Settings</div>
+      </div>
+      <div class="sb-foot">
+        <div class="user-card">
+          <div class="user-av" id="sbAv">AK</div>
+          <div style="min-width:0">
+            <div class="user-nm" id="sbName">Alex Kumar</div>
+          </div>
+          <button class="logout-btn" onclick="doLogout()" title="Sign out">⏻</button>
+        </div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="tb">
+        <div class="tb-left">
+          <button class="ham" onclick="toggleSidebar()">☰</button>
+          <div class="env-selector">
+            <div class="env-ico">☁️</div>
+            <div class="env-info">
+              <span class="env-lbl">AWS Connected</span>
+              <span class="env-val">Prod-Core-App</span>
+            </div>
+            <div class="env-arr">▼</div>
+          </div>
+          <span id="tbPage" style="display:none;">dashboard</span>
+        </div>
+        <div class="tb-right">
+          <div class="live-chip">
+            <div class="live-dot"></div>LIVE
+          </div>
+          <button class="tb-btn" id="exportBtn" onclick="exportCSV()">⬇ Export</button>
+          <button class="tb-btn" id="refreshBtn" onclick="loadDashboard()">⟳ Refresh</button>
+          <button class="tb-btn hi" id="newAlertBtn" onclick="openNewAlertModal()">+ New Alert</button>
+        </div>
+      </div>
+
+      <div class="content">
+
+        <!-- DASHBOARD -->
+        <div class="page on" id="page-dashboard">
+          <div class="notif-bar" id="notifMain">
+            <span style="font-size:14px">💡</span>
+            <span>CloudLens identified <span class="notif-hl"><span id="notifSavings">$4,820</span> in potential savings</span> — <span id="notifRecCount">12</span> recommendations
+              pending review.</span>
+            <span class="notif-x" onclick="this.parentElement.style.display='none'">✕</span>
+          </div>
+          <div class="kpi-grid">
+            <div class="kpi" style="--kg:var(--red);--kglow:rgba(248,113,113,.06);--kibg:var(--red-dim)">
+              <div class="kpi-row">
+                <div class="kpi-icon">💸</div>
+                <div class="kpi-badge bup">↑ 8.2%</div>
+              </div>
+              <div class="kpi-val" id="spend">$0</div>
+              <div class="kpi-lbl">Monthly Spend · MTD</div>
+              <div class="kpi-bar">
+                <div class="kpi-fill" data-w="78" style="background:var(--red)"></div>
+              </div>
+            </div>
+            <div class="kpi" style="--kg:var(--teal);--kglow:rgba(45,212,191,.06);--kibg:var(--teal-dim)">
+              <div class="kpi-row">
+                <div class="kpi-icon">✦</div>
+                <div class="kpi-badge bdn">↓ 12.4%</div>
+              </div>
+              <div class="kpi-val" id="savings">$0</div>
+              <div class="kpi-lbl">Potential Savings</div>
+              <div class="kpi-bar">
+                <div class="kpi-fill" data-w="42" style="background:var(--teal)"></div>
+              </div>
+            </div>
+            <div class="kpi" style="--kg:var(--sky);--kglow:rgba(96,184,245,.07);--kibg:var(--sky-dim)">
+              <div class="kpi-row">
+                <div class="kpi-icon">◈</div>
+                <div class="kpi-badge bnt">↑ 3</div>
+              </div>
+              <div class="kpi-val" id="resources">0</div>
+              <div class="kpi-lbl">Active Resources</div>
+              <div class="kpi-bar">
+                <div class="kpi-fill" data-w="62"></div>
+              </div>
+            </div>
+            <div class="kpi" style="--kg:var(--gold);--kglow:rgba(252,211,77,.06);--kibg:var(--gold-dim)">
+              <div class="kpi-row">
+                <div class="kpi-icon">◬</div>
+                <div class="kpi-badge" style="background:var(--gold-dim);color:var(--gold)">↑ 4</div>
+              </div>
+              <div class="kpi-val" id="openRecs" style="--kc:var(--gold)">0</div>
+              <div class="kpi-lbl">Open Recommendations</div>
+              <div class="kpi-bar">
+                <div class="kpi-fill" data-w="35" style="background:var(--gold)"></div>
+              </div>
+            </div>
+          </div>
+          <!-- ── Live EC2 Instances ──────────────────────────────────────────── -->
+          <div class="tpanel" style="margin-top:20px">
+            <div class="tp-head">
+              <div class="tp-title">🖥️ Live EC2 Instances</div>
+              <span id="ec2StatusSummary" style="font-family:var(--mono);font-size:10px;color:var(--tx2)">—</span>
+            </div>
+            <div style="overflow-x:auto">
+              <table class="dtbl">
+                <thead><tr><th>Instance Name</th><th>Instance ID</th><th>Type</th><th>Status</th><th>Launch Time</th></tr></thead>
+                <tbody id="ec2InstanceTable"><tr><td colspan="5" style="text-align:center;color:var(--tx2);padding:20px;font-family:var(--mono);font-size:11px">⏳ &nbsp; Loading EC2 instances...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="charts-row">
+            <div class="cpanel">
+              <div class="cp-head">
+                <div>
+                  <div class="cp-title">Cost Trend — Last 12 Months</div>
+                  <div class="cp-sub">Actual vs Forecasted spend (USD)</div>
+                </div>
+                <div class="legend">
+                  <div class="leg-item">
+                    <div class="leg-line" style="background:var(--sky)"></div>Actual
+                  </div>
+                  <div class="leg-item">
+                    <div class="leg-dash" style="border-color:var(--teal)"></div>Forecast
+                  </div>
+                </div>
+              </div>
+              <svg id="trendSvg" viewBox="0 0 560 195" style="width:100%;overflow:visible">
+                <defs>
+                  <linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="var(--sky)" stop-opacity=".22" />
+                    <stop offset="100%" stop-color="var(--sky)" stop-opacity="0" />
+                  </linearGradient>
+                </defs>
+                <line x1="44" y1="16" x2="44" y2="158" class="cg" />
+                <line x1="44" y1="44" x2="548" y2="44" class="cg" />
+                <line x1="44" y1="74" x2="548" y2="74" class="cg" />
+                <line x1="44" y1="104" x2="548" y2="104" class="cg" />
+                <line x1="44" y1="134" x2="548" y2="134" class="cg" />
+                <line x1="44" y1="158" x2="548" y2="158" class="cg" />
+                <text x="38" y="47" class="axl" text-anchor="end">50k</text><text x="38" y="77" class="axl"
+                  text-anchor="end">45k</text>
+                <text x="38" y="107" class="axl" text-anchor="end">40k</text><text x="38" y="137" class="axl"
+                  text-anchor="end">35k</text>
+                <text x="38" y="161" class="axl" text-anchor="end">30k</text>
+                <text x="66" y="176" class="axl" text-anchor="middle">Apr</text><text x="107" y="176" class="axl"
+                  text-anchor="middle">May</text>
+                <text x="148" y="176" class="axl" text-anchor="middle">Jun</text><text x="189" y="176" class="axl"
+                  text-anchor="middle">Jul</text>
+                <text x="230" y="176" class="axl" text-anchor="middle">Aug</text><text x="271" y="176" class="axl"
+                  text-anchor="middle">Sep</text>
+                <text x="312" y="176" class="axl" text-anchor="middle">Oct</text><text x="353" y="176" class="axl"
+                  text-anchor="middle">Nov</text>
+                <text x="394" y="176" class="axl" text-anchor="middle">Dec</text><text x="435" y="176" class="axl"
+                  text-anchor="middle">Jan</text>
+                <text x="476" y="176" class="axl" text-anchor="middle">Feb</text><text x="517" y="176" class="axl"
+                  text-anchor="middle">Mar</text>
+                <polygon class="area-fill"
+                  points="66,146 107,138 148,132 189,128 230,120 271,114 312,106 353,101 394,94 435,84 476,158 66,158" />
+                <polyline points="66,146 107,138 148,132 189,128 230,120 271,114 312,106 353,101 394,94 435,84"
+                  style="fill:none;stroke:var(--sky);stroke-width:4;opacity:.18;stroke-linecap:round;stroke-linejoin:round" />
+                <polyline class="ln-main"
+                  points="66,146 107,138 148,132 189,128 230,120 271,114 312,106 353,101 394,94 435,84" />
+                <polyline class="ln-fore" points="435,84 476,71 517,62" />
+                <circle cx="66" cy="146" r="3.5" class="dot-a" />
+                <circle cx="107" cy="138" r="3.5" class="dot-a" />
+                <circle cx="148" cy="132" r="3.5" class="dot-a" />
+                <circle cx="189" cy="128" r="3.5" class="dot-a" />
+                <circle cx="230" cy="120" r="3.5" class="dot-a" />
+                <circle cx="271" cy="114" r="3.5" class="dot-a" />
+                <circle cx="312" cy="106" r="3.5" class="dot-a" />
+                <circle cx="353" cy="101" r="3.5" class="dot-a" />
+                <circle cx="394" cy="94" r="3.5" class="dot-a" />
+                <circle cx="435" cy="84" r="5" class="dot-a" style="stroke-width:3" />
+                <circle cx="476" cy="71" r="3.5" class="dot-b" />
+                <circle cx="517" cy="62" r="3.5" class="dot-b" />
+                <line x1="435" y1="16" x2="435" y2="158" stroke="var(--sky-dim)" stroke-width="1"
+                  stroke-dasharray="3 3" />
+              </svg>
+            </div>
+            <div class="cpanel">
+              <div class="cp-head">
+                <div>
+                  <div class="cp-title">Spend by Service</div>
+                  <div class="cp-sub">Current month breakdown</div>
+                </div>
+              </div>
+              <div class="donut-wrap">
+                <div style="position:relative;width:118px;height:118px;flex-shrink:0">
+                  <svg id="donutSvg" viewBox="0 0 36 36" style="width:118px;height:118px;transform:rotate(-90deg)">
+                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--depth)" stroke-width="4.5" />
+                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--sky)" stroke-width="4.5"
+                      stroke-dasharray="38 62" stroke-dashoffset="0" />
+                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--teal)" stroke-width="4.5"
+                      stroke-dasharray="22 78" stroke-dashoffset="-38" />
+                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="#fcd34d" stroke-width="4.5"
+                      stroke-dasharray="18 82" stroke-dashoffset="-60" />
+                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="#c084fc" stroke-width="4.5"
+                      stroke-dasharray="13 87" stroke-dashoffset="-78" />
+                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="#f87171" stroke-width="4.5"
+                      stroke-dasharray="9 91" stroke-dashoffset="-91" />
+                  </svg>
+                  <div class="donut-center">
+                    <div class="donut-big" id="donutTotal">$38k</div>
+                    <div class="donut-sm">Total</div>
+                  </div>
+                </div>
+                <div class="dl" id="donutLegend">
+                  <div class="dl-row">
+                    <div class="dl-sw" style="background:var(--sky)"></div>EC2 Compute<span class="dl-pct">38%</span>
+                  </div>
+                  <div class="dl-row">
+                    <div class="dl-sw" style="background:var(--teal)"></div>S3 Storage<span class="dl-pct">22%</span>
+                  </div>
+                  <div class="dl-row">
+                    <div class="dl-sw" style="background:#fcd34d"></div>RDS Database<span class="dl-pct">18%</span>
+                  </div>
+                  <div class="dl-row">
+                    <div class="dl-sw" style="background:#c084fc"></div>Lambda<span class="dl-pct">13%</span>
+                  </div>
+                  <div class="dl-row">
+                    <div class="dl-sw" style="background:#f87171"></div>Other<span class="dl-pct">9%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="sec-bar">
+            <div><span class="sec-ttl">Top Recommendations</span><span class="sec-cnt" id="recCountLabel">—</span></div>
+          </div>
+          <div class="tpanel">
+            <div class="tp-head">
+              <div class="tp-title">Cost Optimization Findings</div>
+              <div class="chip-row">
+                <div class="chip on" onclick="filterChip(this)">All</div>
+                <div class="chip" onclick="filterChip(this)">High</div>
+                <div class="chip" onclick="filterChip(this)">Medium</div>
+                <div class="chip" onclick="filterChip(this)">Applied</div>
+              </div>
+            </div>
+            <div style="overflow-x:auto">
+              <table class="dtbl">
+                <thead>
+                  <tr>
+                    <th>Resource</th>
+                    <th>Finding</th>
+                    <th>Severity</th>
+                    <th>Savings / mo</th>
+                    <th>Utilization</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="recBody1"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ANALYTICS -->
+        <div class="page" id="page-analytics">
+          <div class="alert a-info">📈 &nbsp; Analytics — detailed cost breakdown with region-level drill-down and
+            anomaly detection.</div>
+          <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+            <div class="kpi" style="--kg:var(--sky);--kglow:rgba(96,184,245,.07);--kibg:var(--sky-dim)">
+              <div class="kpi-row">
+                <div class="kpi-icon">📈</div>
+                <div class="kpi-badge bdn">↓ 5.1%</div>
+              </div>
+              <div class="kpi-val" id="last7DaysKpi" style="--kc:var(--sky)">—</div>
+              <div class="kpi-lbl">Last 7 Days</div>
+              <div class="kpi-bar">
+                <div class="kpi-fill" id="last7DaysBar" data-w="55"></div>
+              </div>
+            </div>
+            <div class="kpi" style="--kg:var(--violet);--kglow:rgba(196,132,252,.06);--kibg:var(--rose-dim)">
+              <div class="kpi-row">
+                <div class="kpi-icon">🔮</div>
+                <div class="kpi-badge bup">↑ 2.3%</div>
+              </div>
+              <div class="kpi-val" id="forecastKpi" style="--kc:var(--violet)">—</div>
+              <div class="kpi-lbl">Forecasted Month</div>
+              <div class="kpi-bar">
+                <div class="kpi-fill" id="forecastBar" data-w="82" style="background:var(--violet)"></div>
+              </div>
+            </div>
+            <div class="kpi" style="--kg:var(--teal);--kglow:rgba(45,212,191,.06);--kibg:var(--teal-dim)">
+              <div class="kpi-row">
+                <div class="kpi-icon">🏷</div>
+                <div class="kpi-badge bdn">↓ 18%</div>
+              </div>
+              <div class="kpi-val" id="savedKpi" style="--kc:var(--teal)">—</div>
+              <div class="kpi-lbl">Potential Savings</div>
+              <div class="kpi-bar">
+                <div class="kpi-fill" data-w="28" style="background:var(--teal)"></div>
+              </div>
+            </div>
+          </div>
+          <div class="cpanel">
+            <div class="cp-head">
+              <div>
+                <div class="cp-title">Daily Cost Heatmap — Last 35 Days</div>
+                <div class="cp-sub">Spend intensity per calendar day</div>
+              </div>
+            </div>
+            <div id="heatmap" style="margin-top:4px"></div>
+            <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+              <span style="font-family:var(--mono);font-size:8px;color:var(--tx2)">LOW</span>
+              <div style="display:flex;gap:3px">
+                <div style="width:12px;height:12px;border-radius:2px;background:rgba(96,184,245,.06)"></div>
+                <div style="width:12px;height:12px;border-radius:2px;background:rgba(96,184,245,.18)"></div>
+                <div style="width:12px;height:12px;border-radius:2px;background:rgba(96,184,245,.38)"></div>
+                <div style="width:12px;height:12px;border-radius:2px;background:rgba(96,184,245,.6)"></div>
+                <div style="width:12px;height:12px;border-radius:2px;background:rgba(96,184,245,.85)"></div>
+              </div>
+              <span style="font-family:var(--mono);font-size:8px;color:var(--tx2)">HIGH</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RECOMMENDATIONS -->
+        <div class="page" id="page-recommendations">
+          <div class="alert a-info">💡 &nbsp; Recommendations below are generated from your real AWS resource utilization data.</div>
+          <div class="tpanel">
+            <div class="tp-head">
+              <div class="tp-title">All Optimization Findings</div>
+              <div class="chip-row">
+                <div class="chip on" onclick="filterChip(this)">Pending</div>
+                <div class="chip" onclick="filterChip(this)">Applied</div>
+                <div class="chip" onclick="filterChip(this)">Dismissed</div>
+              </div>
+            </div>
+            <div style="overflow-x:auto">
+              <table class="dtbl">
+                <thead>
+                  <tr>
+                    <th>Resource</th>
+                    <th>Finding</th>
+                    <th>Severity</th>
+                    <th>Savings / mo</th>
+                    <th>Utilization</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="recBody2"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SERVICES -->
+        <div class="page" id="page-services">
+          <div class="sec-bar" style="margin-bottom:14px"><span class="sec-ttl">AWS Services</span><span
+              class="sec-cnt" id="servicesCount">9 active</span></div>
+          <div class="svc-grid" id="svcGrid"></div>
+        </div>
+
+        <!-- REGIONS -->
+        <div class="page" id="page-regions">
+          <div class="alert a-info">🌐 &nbsp; Multi-region breakdown — cost distribution across your active AWS regions.</div>
+          <div class="kpi-grid" id="regionsGrid">
+            <!-- Real region data injected by renderRegions() -->
+            <div style="grid-column:1/-1;text-align:center;color:var(--tx2);padding:28px;font-family:var(--mono);font-size:11px;letter-spacing:1px">⏳ &nbsp; Fetching region costs from AWS...</div>
+          </div>
+        </div>
+
+        <!-- BUDGETS -->
+        <div class="page" id="page-budgets">
+          <div class="alert a-info">📊 &nbsp; Budget tracking based on your current AWS Cost Explorer spend data.</div>
+          <div class="tpanel">
+            <div class="tp-head">
+              <div class="tp-title">Budget Tracking</div><button class="tb-btn" style="font-size:11px" onclick="openNewBudgetModal()">+ New
+                Budget</button>
+            </div>
+            <div style="overflow-x:auto">
+              <table class="dtbl">
+                <thead>
+                  <tr>
+                    <th>Budget Name</th>
+                    <th>Limit</th>
+                    <th>Used</th>
+                    <th>Remaining</th>
+                    <th>Status</th>
+                    <th>Progress</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="budgetBody">
+                  <!-- Real budget rows injected by renderBudgets() + loadCustomBudgets() -->
+                  <tr><td colspan="7" style="text-align:center;color:var(--tx2);padding:28px;font-family:var(--mono);font-size:11px;letter-spacing:1px">⏳ &nbsp; Fetching budget data from AWS...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ALERTS -->
+        <div class="page" id="page-alerts">
+          <div class="alert a-info">🔔 &nbsp; Alerts are generated from your real-time AWS resource monitoring data.</div>
+          <div id="alertsList" style="display:flex;flex-direction:column;gap:8px">
+            <!-- Real alerts injected by renderAlerts() + loadCustomAlerts() -->
+          </div>
+        </div>
+
+        <!-- SETTINGS -->
+        <div class="page" id="page-settings">
+          <div style="max-width:500px">
+            <div class="sec-ttl" style="margin-bottom:18px">Account Settings</div>
+            <div class="cpanel">
+              <div id="settingsAlert" style="margin-bottom:0"></div>
+              <div class="fg"><label class="fl">Display Name</label><input class="fi" id="stName" value="" />
+              </div>
+              <div class="fg"><label class="fl">Email Address</label><input class="fi" type="email" id="stEmail"
+                  value="" readonly style="opacity:.5;cursor:not-allowed" /></div>
+              <div class="fg"><label class="fl">AWS Account ID</label><input class="fi" id="stAwsAccountId" value="Not connected" readonly
+                  style="opacity:.4;cursor:not-allowed" /></div>
+              <div class="fg"><label class="fl">Default Region</label>
+                <select class="fi" id="stRegionSel" style="cursor:pointer">
+                  <option value="us-east-1">us-east-1 (N. Virginia)</option>
+                  <option value="us-east-2">us-east-2 (Ohio)</option>
+                  <option value="us-west-1">us-west-1 (N. California)</option>
+                  <option value="us-west-2">us-west-2 (Oregon)</option>
+                  <option value="eu-west-1">eu-west-1 (Ireland)</option>
+                  <option value="eu-central-1">eu-central-1 (Frankfurt)</option>
+                  <option value="ap-south-1">ap-south-1 (Mumbai)</option>
+                  <option value="ap-southeast-1">ap-southeast-1 (Singapore)</option>
+                  <option value="ap-northeast-1">ap-northeast-1 (Tokyo)</option>
+                </select>
+              </div>
+              <div class="fg"><label class="fl">Cost Anomaly Threshold</label>
+                <select class="fi" id="stAnomalyThreshold" style="cursor:pointer">
+                  <option value="15">15% above baseline</option>
+                  <option value="25">25% above baseline</option>
+                  <option value="50">50% above baseline</option>
+                </select>
+              </div>
+              <button class="btn-primary" style="max-width:150px;margin-top:6px" id="saveBtn" onclick="saveSettings()">
+                <span class="bt">Save Changes</span>
+                <div class="bs"></div>
+              </button>
+            </div>
+
+            <div class="sec-ttl" style="margin-top:28px;margin-bottom:18px">AWS Connection</div>
+            <div class="cpanel">
+              <div class="af-alert" id="awsConnectAlert" style="margin-bottom:14px"></div>
+              <!-- Connected -->
+              <div id="awsConnectedInfo" style="display:none">
+                <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--teal-dim);border:1px solid rgba(45,212,191,.2);border-radius:var(--r2);margin-bottom:16px">
+                  <span style="font-size:20px">✅</span>
+                  <div>
+                    <div style="font-size:13px;font-weight:600;color:#5eead4">AWS Account Connected</div>
+                    <div id="awsConnectedRegion" style="font-size:11px;color:var(--tx1);font-family:var(--mono);margin-top:2px">Region: —</div>
+                  </div>
+                </div>
+                <button class="btn-primary" id="disconnectBtn" onclick="disconnectAws()" style="max-width:200px;background:linear-gradient(135deg,#f87171,#b91c1c)">
+                  <span class="bt">🔌 Disconnect AWS</span>
+                  <div class="bs"></div>
+                </button>
+              </div>
+              <!-- Not connected -->
+              <div id="awsConnectForm">
+                <div class="fg"><label class="fl">Access Key ID</label><input class="fi" id="awsKeyId" placeholder="AKIAIOSFODNN7EXAMPLE" autocomplete="off" /></div>
+                <div class="fg"><label class="fl">Secret Access Key</label><input class="fi" type="password" id="awsSecretKey" placeholder="••••••••••••••••••••••••••••••••" autocomplete="new-password" /></div>
+                <div class="fg"><label class="fl">Primary Region</label>
+                  <select class="fi" id="awsRegionSel" style="cursor:pointer">
+                    <option value="us-east-1">us-east-1 — N. Virginia</option>
+                    <option value="us-east-2">us-east-2 — Ohio</option>
+                    <option value="us-west-1">us-west-1 — N. California</option>
+                    <option value="us-west-2">us-west-2 — Oregon</option>
+                    <option value="eu-west-1">eu-west-1 — Ireland</option>
+                    <option value="eu-central-1">eu-central-1 — Frankfurt</option>
+                    <option value="ap-south-1">ap-south-1 — Mumbai</option>
+                    <option value="ap-southeast-1">ap-southeast-1 — Singapore</option>
+                    <option value="ap-northeast-1">ap-northeast-1 — Tokyo</option>
+                  </select>
+                </div>
+                <button class="btn-primary" id="awsConnectBtn" onclick="connectAws()" style="max-width:220px;margin-top:4px">
+                  <span class="bt">🔗 Connect AWS Account</span>
+                  <div class="bs"></div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let user = null;
+    let awsData = null;
+    // Auto-detect: if opened via file:// or a port other than 5000, point to the backend server.
+    const BASE_URL = (window.location.protocol === 'file:' || window.location.port !== '5000')
+      ? 'http://localhost:5000'
+      : '';
+    const recs = []; // populated from real AWS data only
+    const svcs = []; // populated from real AWS costByService only
+    // ── AWS service meta map ──────────────────────────────────────────────────
+    const SVC_META = {
+      'Amazon Elastic Compute Cloud':       { ico: '🖥', cat: 'Compute',     color: 'var(--sky)',   short: 'EC2'        },
+      'Amazon Simple Storage Service':      { ico: '🪣', cat: 'Storage',     color: 'var(--teal)',  short: 'S3'         },
+      'Amazon Relational Database Service': { ico: '🗄', cat: 'Database',    color: '#fcd34d',      short: 'RDS'        },
+      'AWS Lambda':                         { ico: '⚡', cat: 'Serverless',  color: '#c084fc',      short: 'Lambda'     },
+      'Amazon CloudFront':                  { ico: '🌐', cat: 'CDN',         color: '#f472b6',      short: 'CloudFront' },
+      'Amazon API Gateway':                 { ico: '🔌', cat: 'Integration', color: 'var(--sky)',   short: 'API GW'     },
+      'Amazon DynamoDB':                    { ico: '💾', cat: 'Database',    color: '#f472b6',      short: 'DynamoDB'   },
+      'Amazon CloudWatch':                  { ico: '📊', cat: 'Monitoring',  color: '#fcd34d',      short: 'CloudWatch' },
+      'AWS CloudTrail':                     { ico: '🔍', cat: 'Logging',     color: '#fcd34d',      short: 'CloudTrail' },
+      'Amazon VPC':                         { ico: '🔗', cat: 'Networking',  color: '#c084fc',      short: 'VPC'        },
+      'Amazon Elastic Container Service':   { ico: '📦', cat: 'Containers',  color: 'var(--teal)',  short: 'ECS'        },
+      'AWS Fargate':                        { ico: '📦', cat: 'Containers',  color: 'var(--teal)',  short: 'Fargate'    },
+      'Amazon Route 53':                    { ico: '🗺', cat: 'DNS',         color: '#f472b6',      short: 'Route 53'   },
+      'AWS Support':                        { ico: '🎧', cat: 'Support',     color: 'var(--sky)',   short: 'Support'    },
+      'AWS Cost Explorer':                  { ico: '💰', cat: 'Management',  color: 'var(--teal)',  short: 'Cost Expl.' },
+      'Amazon Elastic Block Store':         { ico: '💽', cat: 'Storage',     color: 'var(--sky)',   short: 'EBS'        },
+      'AWS Key Management Service':         { ico: '🔑', cat: 'Security',    color: '#f472b6',      short: 'KMS'        },
+    };
+    const DONUT_COLORS = ['var(--sky)', 'var(--teal)', '#fcd34d', '#c084fc', '#f87171'];
+    const REGION_META = {
+      'us-east-1':      { flag: '🇺🇸', label: 'N. Virginia'   },
+      'us-east-2':      { flag: '🇺🇸', label: 'Ohio'          },
+      'us-west-1':      { flag: '🇺🇸', label: 'N. California'  },
+      'us-west-2':      { flag: '🇺🇸', label: 'Oregon'        },
+      'eu-west-1':      { flag: '🇪🇺', label: 'Ireland'       },
+      'eu-west-2':      { flag: '🇪🇺', label: 'London'        },
+      'eu-central-1':   { flag: '🇩🇪', label: 'Frankfurt'     },
+      'ap-southeast-1': { flag: '🇸🇬', label: 'Singapore'     },
+      'ap-southeast-2': { flag: '🇦🇺', label: 'Sydney'        },
+      'ap-northeast-1': { flag: '🇯🇵', label: 'Tokyo'         },
+      'ap-south-1':     { flag: '🇮🇳', label: 'Mumbai'        },
+    };
+    // ─────────────────────────────────────────────────────────────────────────
+    function showAlert(msg, type = 'err-a') { const el = document.getElementById('authAlert'); el.className = 'af-alert show ' + type; el.innerHTML = (type === 'err-a' ? '⚠️' : '✅') + ' &nbsp; ' + msg; }
+    function clearAlert() { document.getElementById('authAlert').className = 'af-alert'; }
+    function setLoad(id, on) { const b = document.getElementById(id); if (b) { b.classList.toggle('loading', on); b.disabled = on; } }
+
+    async function handleCredentialResponse(response) {
+      try {
+        const id_token = response.credential;
+        showAlert("Authenticating...", "ok-a");
+
+        const res = await fetch(BASE_URL + "/api/auth/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: id_token })
+        });
+
+        const data = await res.json();
+
+        if (data.token) {
+          localStorage.setItem("token", data.token);
+          const u = {
+            name: data.user.name,
+            email: data.user.email,
+            picture: data.user.picture || null,
+            awsConnected: data.user.awsConnected || false,
+            awsRegion: data.user.awsRegion || null,
+            awsAccountId: data.user.awsAccountId || null,
+            preferredRegion: data.user.preferredRegion || 'us-east-1',
+            anomalyThreshold: data.user.anomalyThreshold || '15',
+          };
+          localStorage.setItem("user", JSON.stringify(u));
+          user = u;
+          launchApp();
+          loadDashboard();
+        } else {
+          showAlert(data.message || "Authentication failed", "err-a");
+        }
+      } catch (err) {
+        showAlert("Server error during Google Auth", "err-a");
+      }
+    }
+    function cap(s) { return s.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') }
+    function launchApp() {
+      document.getElementById('loader').classList.remove('out');
+      document.getElementById('auth').style.display = 'none';
+      setTimeout(() => {
+        document.getElementById('loader').classList.add('out');
+        document.getElementById('app').classList.add('on');
+        const avEl = document.getElementById('sbAv');
+        if (user.picture) {
+          avEl.style.cssText = 'background-image:url("' + user.picture + '");background-size:cover;background-position:center;font-size:0;border-radius:8px;';
+          avEl.textContent = '';
+        } else {
+          const ini = user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+          avEl.textContent = ini;
+        }
+        document.getElementById('sbName').textContent = user.name;
+        document.getElementById('stName').value = user.name;
+        document.getElementById('stEmail').value = user.email;
+        // Populate settings dropdowns with saved user preferences
+        const regSel = document.getElementById('stRegionSel');
+        if (regSel && user.preferredRegion) regSel.value = user.preferredRegion;
+        const thrSel = document.getElementById('stAnomalyThreshold');
+        if (thrSel && user.anomalyThreshold) thrSel.value = user.anomalyThreshold;
+        // Show real AWS Account ID
+        const accEl = document.getElementById('stAwsAccountId');
+        if (accEl) accEl.value = user.awsAccountId || 'Not connected';
+        // Clear hardcoded placeholder HTML — real data will replace these via loadDashboard()
+        const ld = (msg) => `<div style="text-align:center;color:var(--tx2);padding:28px;font-family:var(--mono);font-size:11px;letter-spacing:1px">⏳ &nbsp; ${msg}</div>`;
+        document.getElementById('budgetBody').innerHTML = `<tr><td colspan="6">${ld('Fetching budget data from AWS...')}</td></tr>`;
+        document.getElementById('alertsList').innerHTML = ld('Fetching alerts from AWS...');
+        document.getElementById('regionsGrid').innerHTML = `<div style="grid-column:1/-1">${ld('Fetching region costs from AWS...')}</div>`;
+        renderAwsStatus(user.awsConnected, user.awsRegion);
+        renderRecs([]); renderSvcs(null); renderHeatmap(null); animateFills();
+      }, 1900);
+    }
+    function doLogout() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      location.reload();
+    }
+    function nav(id, el) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+      document.querySelectorAll('.ni').forEach(n => n.classList.remove('act'));
+      document.getElementById('page-' + id).classList.add('on');
+      if (el) el.classList.add('act');
+      document.getElementById('tbPage').textContent = id;
+      closeSidebar(); setTimeout(animateFills, 40);
+    }
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('on'); }
+    function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('on'); }
+    function sevCls(s) { return s === 'h' ? 'sv-h' : s === 'm' ? 'sv-m' : 'sv-l' }
+    function sevLbl(s) { return s === 'h' ? '● High' : s === 'm' ? '◑ Medium' : '○ Low' }
+    function utilClr(u) { return u < 20 ? 'var(--red)' : u < 50 ? 'var(--gold)' : 'var(--teal)' }
+    function recRow(r) { return `<tr><td><div class="rid">${r.id}</div><div class="rtype">${r.type}</div></td><td style="max-width:200px;font-size:11px;color:var(--tx1);line-height:1.45">${r.finding}</td><td><span class="sev-tag ${sevCls(r.sev)}">${sevLbl(r.sev)}</span></td><td><span class="sav-val">${r.sav}</span><span class="sav-unit">/mo</span></td><td><div style="display:flex;align-items:center;gap:7px"><div class="util-bar"><div class="util-fill" style="width:${r.util}%;background:${utilClr(r.util)}"></div></div><span style="font-family:var(--mono);font-size:9px;color:var(--tx2)">${r.util}%</span></div></td><td><button class="act-btn" onclick="applyRec(this)">Apply →</button></td></tr>` }
+    function buildRecsFromData(data) {
+      const built = [];
+      if (data.ec2?.stopped > 0)    built.push({ id: 'ec2-stopped',    type: `EC2 · ${data.ec2.stopped} instance(s)`,  finding: `${data.ec2.stopped} stopped instance(s) — terminate to avoid ongoing charges`, sev: 'h', sav: '$' + (data.ec2.stopped * 15),    util: 0 });
+      if (data.ebs?.unattached > 0) built.push({ id: 'ebs-unattached', type: `EBS · ${data.ebs.unattached} volume(s)`, finding: `${data.ebs.unattached} unattached EBS volume(s) — delete if no longer needed`,     sev: 'h', sav: '$' + (data.ebs.unattached * 24), util: 0 });
+      return built;
+    }
+    let _allRecs = []; let _recPage = 0; const _recPerPage = 5;
+    function renderRecs(rows) {
+      _allRecs = Array.isArray(rows) ? rows : [];
+      _recPage = 0;
+      _renderRecPage();
+    }
+    function _renderRecPage() {
+      const start = _recPage * _recPerPage;
+      const pageRows = _allRecs.slice(start, start + _recPerPage);
+      const total = _allRecs.length;
+      const totalPages = Math.max(1, Math.ceil(total / _recPerPage));
+      const h = total > 0
+        ? pageRows.map(recRow).join('')
+        : '<tr><td colspan="6" style="text-align:center;color:var(--tx2);padding:28px;font-family:var(--mono);font-size:11px;letter-spacing:1px">⏳ &nbsp; Loading recommendations from AWS data...</td></tr>';
+      const paging = total > _recPerPage
+        ? `<tr><td colspan="6" style="text-align:right;padding:10px 16px;border-top:1px solid var(--rim0)">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--tx2);margin-right:12px">Page ${_recPage + 1} of ${totalPages}</span>
+            <button class="act-btn" onclick="_recPageChange(-1)" ${_recPage === 0 ? 'disabled' : ''}>← Prev</button>
+            <button class="act-btn" style="margin-left:6px" onclick="_recPageChange(1)" ${_recPage >= totalPages - 1 ? 'disabled' : ''}>Next →</button>
+          </td></tr>`
+        : '';
+      document.getElementById('recBody1').innerHTML = h + paging;
+      document.getElementById('recBody2').innerHTML = h + paging;
+      const label = document.getElementById('recCountLabel');
+      if (label) label.textContent = total ? total + ' findings' : '—';
+    }
+    function _recPageChange(dir) {
+      const totalPages = Math.max(1, Math.ceil(_allRecs.length / _recPerPage));
+      _recPage = Math.max(0, Math.min(_recPage + dir, totalPages - 1));
+      _renderRecPage();
+    }
+    function applyRec(btn) { btn.textContent = '✓ Applied'; btn.disabled = true; }
+    // ── Service meta lookup ──────────────────────────────────────────────────
+    function svcMeta(name) {
+      for (const [key, val] of Object.entries(SVC_META)) {
+        if (name.includes(key) || key.includes(name)) return { ...val };
+      }
+      return { ico: '☁', cat: 'Service', color: 'var(--sky)', short: name.replace('Amazon ', '').replace('AWS ', '').slice(0, 14) };
+    }
+    // ── Services page ────────────────────────────────────────────────────────
+    function renderSvcs(apiData) {
+      const grid = document.getElementById('svcGrid');
+      if (!grid) return;
+      let items;
+      if (apiData?.costByService?.length > 0) {
+        items = apiData.costByService.map(s => {
+          const m = svcMeta(s.name);
+          return { ico: m.ico, name: m.short, cat: m.cat, cost: '$' + parseFloat(s.cost).toLocaleString(undefined, { maximumFractionDigits: 2 }), region: 'us-east-1', color: m.color };
+        });
+      } else {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--tx2);padding:28px;font-family:var(--mono);font-size:11px;letter-spacing:1px">⏳ &nbsp; Loading service cost data from AWS...</div>';
+        return;
+      }
+      grid.innerHTML = items.map(s =>
+        `<div class="svc-card" style="--sc:${s.color}"><div class="svc-top"><div class="svc-ico" style="background:${s.color}18">${s.ico}</div>` +
+        `<div><div class="svc-name">${s.name}</div><div class="svc-cat">${s.cat}</div></div></div>` +
+        `<div class="svc-amt" style="color:${s.color}">${s.cost}</div>` +
+        `<div class="svc-foot"><div class="svc-rgn">${s.region}</div><div class="chip" style="font-size:8px;padding:3px 8px">Details →</div></div></div>`
+      ).join('');
+    }
+    // ── Donut chart ───────────────────────────────────────────────────────────
+    function updateDonut(costByService, totalCost) {
+      const svgEl    = document.getElementById('donutSvg');
+      const totalEl  = document.getElementById('donutTotal');
+      const legendEl = document.getElementById('donutLegend');
+      if (!svgEl || !costByService?.length) return;
+      const totalNum = parseFloat(totalCost) || 0;
+      const circ     = 99.9;
+      const topItems = costByService.slice(0, 5);
+      const segments = topItems.map((item, i) => ({ name: svcMeta(item.name).short, cost: parseFloat(item.cost), color: DONUT_COLORS[i] }));
+      const topCost  = segments.reduce((s, i) => s + i.cost, 0);
+      if (totalNum - topCost > 0.5) segments.push({ name: 'Other', cost: totalNum - topCost, color: '#f87171' });
+      const circles = svgEl.querySelectorAll('circle:not(:first-child)');
+      let offset = 0;
+      segments.forEach((seg, i) => {
+        const dash = totalNum > 0 ? (seg.cost / totalNum) * circ : 0;
+        if (circles[i]) {
+          circles[i].setAttribute('stroke', seg.color);
+          circles[i].setAttribute('stroke-dasharray', `${dash.toFixed(1)} ${(circ - dash).toFixed(1)}`);
+          circles[i].setAttribute('stroke-dashoffset', `-${offset.toFixed(1)}`);
+        }
+        offset += dash;
+      });
+      for (let i = segments.length; i < circles.length; i++) circles[i].setAttribute('stroke-dasharray', '0 100');
+      if (totalEl) { const a = totalNum >= 1000 ? '$' + (totalNum / 1000).toFixed(1) + 'k' : '$' + totalNum.toFixed(0); totalEl.textContent = a; }
+      if (legendEl) legendEl.innerHTML = segments.map(seg => { const p = totalNum > 0 ? Math.round((seg.cost / totalNum) * 100) : 0; return `<div class="dl-row"><div class="dl-sw" style="background:${seg.color}"></div>${seg.name}<span class="dl-pct">${p}%</span></div>`; }).join('');
+    }
+    // ── Alerts from real data ─────────────────────────────────────────────────
+    function renderAlerts(data) {
+      const el = document.getElementById('alertsList');
+      if (!el || !data) return;
+      const alerts = [];
+      if (data.ec2?.stopped > 0)    alerts.push({ icon: '🔴', color: 'var(--red)',  bdr: 'rgba(248,113,113,.14)', title: `${data.ec2.stopped} Stopped EC2 Instance(s)`,         body: `${data.ec2.stopped} instance(s) stopped — still incurring EBS charges. Terminate if unused.`,                                       time: 'Now'          });
+      if (data.ebs?.unattached > 0) alerts.push({ icon: '🟡', color: 'var(--gold)', bdr: 'rgba(252,211,77,.12)',  title: `Unattached EBS Volumes (${data.ebs.unattached})`,          body: `${data.ebs.unattached} volume(s) unattached — est. $${(data.ebs.unattached * 24).toFixed(0)}/month wasted spend`,                    time: '1 hr ago'     });
+      if (parseFloat(data.savings) > 0) alerts.push({ icon: '🟢', color: 'var(--teal)', bdr: 'rgba(45,212,191,.14)', title: `$${data.savings} in Potential Savings Identified`, body: `${data.openRecommendations} optimization opportunities — right-sizing, idle cleanup and more.`, time: 'This session' });
+      if (!alerts.length) alerts.push({ icon: '🟢', color: 'var(--teal)', bdr: 'rgba(45,212,191,.14)', title: 'All Systems Healthy', body: 'No critical issues detected. CloudLens monitors your infrastructure continuously.', time: 'Now' });
+      el.innerHTML = alerts.map(a =>
+        `<div class="alert-item" style="border-color:${a.bdr}"><span style="font-size:15px;flex-shrink:0">${a.icon}</span>` +
+        `<div><div class="ai-title" style="color:${a.color}">${a.title}</div><div class="ai-body">${a.body}</div></div>` +
+        `<div class="ai-time">${a.time}</div></div>`
+      ).join('');
+    }
+    // ── Regions from real data ────────────────────────────────────────────────
+    function renderRegions(data) {
+      const el = document.getElementById('regionsGrid');
+      if (!el || !data?.costByRegion?.length) return;
+      const colors = ['var(--sky)', 'var(--teal)', 'var(--gold)', 'var(--violet)'];
+      el.innerHTML = data.costByRegion.map((r, i) => {
+        const meta  = REGION_META[r.name] || { flag: '🌍', label: r.name };
+        const color = colors[i] || 'var(--sky)';
+        return `<div class="kpi" style="--kg:${color};--kglow:rgba(96,184,245,.07);--kibg:var(--sky-dim)">` +
+          `<div class="kpi-row"><div class="kpi-icon">${meta.flag}</div><div class="kpi-badge bnt">${r.pct}%</div></div>` +
+          `<div class="kpi-val" style="--kc:${color}">$${parseFloat(r.cost).toLocaleString()}</div>` +
+          `<div class="kpi-lbl">${r.name} · ${meta.label}</div>` +
+          `<div class="kpi-bar"><div class="kpi-fill" data-w="${r.pct}" style="background:${color};width:${r.pct}%"></div></div></div>`;
+      }).join('');
+    }
+    // ── Analytics page KPIs ───────────────────────────────────────────────────
+    function renderAnalytics(data) {
+      const fmt0 = n => parseFloat(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
+      const k7 = document.getElementById('last7DaysKpi');
+      const kf = document.getElementById('forecastKpi');
+      const ks = document.getElementById('savedKpi');
+      const b7 = document.getElementById('last7DaysBar');
+      const bf = document.getElementById('forecastBar');
+      const sc = document.getElementById('servicesCount');
+      if (k7 && data.last7DaysCost)  k7.textContent = '$' + fmt0(data.last7DaysCost);
+      if (kf && parseFloat(data.forecastedCost) > 0) kf.textContent = '$' + fmt0(parseFloat(data.totalCost) + parseFloat(data.forecastedCost));
+      if (ks && data.savings) ks.textContent = '$' + fmt0(parseFloat(data.savings));
+      if (sc) sc.textContent = (data.costByService?.length || 0) + ' active';
+      const total = parseFloat(data.totalCost) || 1;
+      if (b7 && data.last7DaysCost) { const w = Math.min(Math.round(parseFloat(data.last7DaysCost) / total * 100), 100); b7.setAttribute('data-w', w); b7.style.width = w + '%'; }
+      if (bf && parseFloat(data.forecastedCost) > 0) { const w = Math.min(Math.round((parseFloat(data.totalCost) + parseFloat(data.forecastedCost)) / (total * 1.5) * 100), 100); bf.setAttribute('data-w', w); bf.style.width = w + '%'; }
+    }
+    // ── 12-month trend chart ───────────────────────────────────────────────────
+    function renderTrendChart(monthlyCosts) {
+      const svg = document.getElementById('trendSvg');
+      if (!svg || !monthlyCosts?.length) return;
+      const data  = monthlyCosts.slice(-10);
+      const costs = data.map(m => parseFloat(m.cost));
+      const maxC  = Math.max(...costs, 1);
+      const step  = Math.ceil(maxC / 5 / 1000) * 1000 || 1000;
+      const maxL  = step * 5;
+      const xS = 66, xE = 435, yT = 44, yB = 158;
+      const dx   = data.length > 1 ? (xE - xS) / (data.length - 1) : 0;
+      const toY  = c => +(yB - (c / maxL) * (yB - yT)).toFixed(0);
+      const toX  = i => +(xS + i * dx).toFixed(0);
+      const pts  = data.map((_, i) => `${toX(i)},${toY(costs[i])}`).join(' ');
+      const MN   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const mn   = d => { try { return MN[new Date(d.month + '-01').getMonth()]; } catch(e) { return ''; } };
+      const fmt  = v => v >= 1000 ? (v/1000).toFixed(0) + 'k' : v;
+      const gridY = [44, 74, 104, 134, 158];
+      svg.innerHTML =
+        `<defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--sky)" stop-opacity=".22"/><stop offset="100%" stop-color="var(--sky)" stop-opacity="0"/></linearGradient></defs>` +
+        `<line x1="44" y1="16" x2="44" y2="158" class="cg"/>` +
+        gridY.map(y => `<line x1="44" y1="${y}" x2="548" y2="${y}" class="cg"/>`).join('') +
+        [5,4,3,2,1].map((m,i) => `<text x="38" y="${gridY[i]+3}" class="axl" text-anchor="end">${fmt(step*m)}</text>`).join('') +
+        data.map((d,i) => `<text x="${toX(i)}" y="176" class="axl" text-anchor="middle">${mn(d)}</text>`).join('') +
+        `<polygon class="area-fill" points="${pts} ${toX(data.length-1)},158 ${toX(0)},158"/>` +
+        `<polyline points="${pts}" style="fill:none;stroke:var(--sky);stroke-width:4;opacity:.18;stroke-linecap:round;stroke-linejoin:round"/>` +
+        `<polyline class="ln-main" points="${pts}"/>` +
+        data.map((d,i) => `<circle cx="${toX(i)}" cy="${toY(costs[i])}" r="3.5" class="dot-a"/>`).join('');
+    }
+    // ── Budgets from real costByService ─────────────────────────────────────────────
+    function renderBudgets(data) {
+      const tbody = document.getElementById('budgetBody');
+      if (!tbody || !data?.costByService?.length) return;
+      tbody.innerHTML = data.costByService.slice(0, 4).map(s => {
+        const used  = parseFloat(s.cost);
+        const limit = Math.max(Math.ceil(used * 1.35 / 100) * 100, 1);
+        const rem   = Math.max(0, limit - used);
+        const pct   = Math.min(Math.round(used / limit * 100), 100);
+        const clr   = pct > 85 ? 'var(--red)' : pct > 60 ? 'var(--gold)' : 'var(--teal)';
+        const tag   = pct > 85 ? '<span class="sev-tag sv-h">● Critical</span>'
+                    : pct > 60 ? '<span class="sev-tag sv-m">◑ Warning</span>'
+                    : '<span class="sev-tag sv-l">○ Healthy</span>';
+        const m = svcMeta(s.name);
+        return `<tr><td><div class="rid">${m.short}-Budget</div></td>` +
+          `<td style="color:var(--tx1);font-family:var(--mono);font-size:11px">$${limit.toLocaleString()}</td>` +
+          `<td style="font-weight:600;font-family:var(--mono);font-size:11px">$${used.toLocaleString()}</td>` +
+          `<td style="color:${clr};font-family:var(--mono);font-size:11px">$${rem.toLocaleString()}</td>` +
+          `<td>${tag}</td>` +
+          `<td><div class="prog bprog"><div class="prog-fill" data-w="${pct}" style="background:${clr};width:${pct}%"></div></div></td></tr>`;
+      }).join('');
+    }
+    // ── Export CSV ──────────────────────────────────────────────────────────────
+    function exportCSV() {
+      if (!awsData?.costByService?.length) { alert('Data still loading — try again in a moment.'); return; }
+      const rows = awsData.costByService.map(r => `"${r.name}",$${parseFloat(r.cost).toFixed(2)}`);
+      const csv  = 'Service,Cost (This Month USD)\n' + rows.join('\n');
+      const a = Object.assign(document.createElement('a'), {
+        href: URL.createObjectURL(new Blob([csv], { type: 'text/csv' })),
+        download: `cloudlens-${new Date().toISOString().split('T')[0]}.csv`
+      });
+      a.click(); URL.revokeObjectURL(a.href);
+    }
+    function renderHeatmap(dailyCosts) {
+      const el = document.getElementById('heatmap'); if (!el) return;
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      let h = days.map(d => `<div style="font-family:var(--mono);font-size:8px;color:var(--tx2);text-align:center;padding:4px 0;letter-spacing:.5px">${d}</div>`).join('');
+      if (dailyCosts && dailyCosts.length > 0) {
+        const costs = dailyCosts.map(d => parseFloat(d.cost));
+        const maxCost = Math.max(...costs, 0.01);
+        const padded = costs.length >= 35 ? costs.slice(-35) : [...Array(35 - costs.length).fill(0), ...costs];
+        const paddedDates = dailyCosts.length >= 35 ? dailyCosts.slice(-35) : [...Array(35 - dailyCosts.length).fill(null), ...dailyCosts];
+        padded.forEach((cost, i) => {
+          const entry = paddedDates[i];
+          const pct = maxCost > 0 ? cost / maxCost : 0;
+          const op = cost > 0 ? (0.08 + pct * 0.77).toFixed(2) : '0.04';
+          const label = entry ? `${entry.date}: $${parseFloat(entry.cost).toLocaleString(undefined, { maximumFractionDigits: 2 })}` : 'No data';
+          h += `<div title="${label}" style="height:26px;border-radius:3px;background:rgba(96,184,245,${op});cursor:default;transition:transform .1s,box-shadow .1s" onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 0 8px rgba(96,184,245,.4)'" onmouseout="this.style.transform='';this.style.boxShadow=''"></div>`;
+        });
+      } else {
+        for (let i = 0; i < 35; i++) {
+          h += `<div style="height:26px;border-radius:3px;background:var(--rim0);opacity:0.4"></div>`;
+        }
+      }
+      el.innerHTML = h;
+    }
+    function animateFills() {
+      document.querySelectorAll('.kpi-fill[data-w],.prog-fill[data-w]').forEach(el => {
+        el.style.width = '0%';
+        requestAnimationFrame(() => { requestAnimationFrame(() => { el.style.transition = 'width 1.2s cubic-bezier(.16,1,.3,1)'; el.style.width = el.dataset.w + '%'; }); });
+      });
+    }
+    async function saveSettings() {
+      const btn = document.getElementById('saveBtn'); btn.classList.add('loading'); btn.disabled = true;
+      const name             = document.getElementById('stName').value.trim();
+      const preferredRegion  = document.getElementById('stRegionSel')?.value || null;
+      const anomalyThreshold = document.getElementById('stAnomalyThreshold')?.value || null;
+      try {
+        const res = await fetch(BASE_URL + '/api/auth/profile', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+          body: JSON.stringify({ name, preferredRegion, anomalyThreshold })
+        });
+        const data = await res.json();
+        const al = document.getElementById('settingsAlert');
+        if (data.success) {
+          // Update in-memory user
+          if (name) {
+            user.name = name;
+            const ini = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+            document.getElementById('sbAv').textContent = ini;
+            document.getElementById('sbName').textContent = name;
+          }
+          if (preferredRegion)  user.preferredRegion  = preferredRegion;
+          if (anomalyThreshold) user.anomalyThreshold = anomalyThreshold;
+          // Persist to localStorage
+          const st = JSON.parse(localStorage.getItem('user') || '{}');
+          if (name)             st.name             = name;
+          if (preferredRegion)  st.preferredRegion  = preferredRegion;
+          if (anomalyThreshold) st.anomalyThreshold = anomalyThreshold;
+          localStorage.setItem('user', JSON.stringify(st));
+          al.className = 'alert a-ok'; al.style.marginBottom = '16px'; al.innerHTML = '✅ &nbsp; Settings saved successfully.';
+        } else {
+          al.className = 'alert a-warn'; al.style.marginBottom = '16px'; al.innerHTML = '⚠️ &nbsp; ' + (data.message || 'Could not save.');
+        }
+        setTimeout(() => { al.className = ''; al.innerHTML = ''; al.style.marginBottom = ''; }, 3000);
+      } catch (e) {
+        const al = document.getElementById('settingsAlert');
+        al.className = 'alert a-warn'; al.style.marginBottom = '16px'; al.innerHTML = '⚠️ &nbsp; Server unreachable — changes not saved.';
+        setTimeout(() => { al.className = ''; al.innerHTML = ''; al.style.marginBottom = ''; }, 3000);
+      }
+      btn.classList.remove('loading'); btn.disabled = false;
+    }
+    function filterChip(el) { el.closest('.chip-row').querySelectorAll('.chip').forEach(c => c.classList.remove('on')); el.classList.add('on'); }
+    // ── AWS connection ────────────────────────────────────────────────────────
+    function renderAwsStatus(connected, region) {
+      const form = document.getElementById('awsConnectForm');
+      const info = document.getElementById('awsConnectedInfo');
+      const rgn  = document.getElementById('awsConnectedRegion');
+      if (!form || !info) return;
+      if (connected) {
+        form.style.display = 'none';
+        info.style.display = 'block';
+        if (rgn) rgn.textContent = 'Region: ' + (region || 'us-east-1');
+      } else {
+        form.style.display = 'block';
+        info.style.display = 'none';
+      }
+    }
+    function showAwsNotConnectedBanner() {
+      let b = document.getElementById('awsNotConnectedBanner');
+      if (b) return;
+      b = document.createElement('div');
+      b.id = 'awsNotConnectedBanner';
+      b.className = 'alert a-info';
+      b.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:5000;max-width:340px;cursor:pointer;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:authIn .4s cubic-bezier(.16,1,.3,1) both;display:flex;align-items:center;gap:12px;';
+      b.innerHTML = '<span style="font-size:20px">🔑</span><div><div style="font-weight:600;font-size:13px">Connect your AWS account</div><div style="font-size:11px;opacity:.7;margin-top:2px">Go to Settings → AWS Connection</div></div>';
+      b.onclick = () => { nav('settings', document.querySelector('.ni[onclick*="settings"]')); b.remove(); };
+      document.body.appendChild(b);
+    }
+    async function connectAws() {
+      const keyId  = document.getElementById('awsKeyId').value.trim();
+      const secret = document.getElementById('awsSecretKey').value.trim();
+      const region = document.getElementById('awsRegionSel').value;
+      const al     = document.getElementById('awsConnectAlert');
+      const btn    = document.getElementById('awsConnectBtn');
+      if (!keyId || !secret) {
+        al.className = 'af-alert show err-a';
+        al.innerHTML = '⚠️ &nbsp; Both Access Key ID and Secret Access Key are required.';
+        return;
+      }
+      btn.classList.add('loading'); btn.disabled = true;
+      al.className = 'af-alert';
+      try {
+        const res  = await fetch(BASE_URL + '/api/aws/connect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+          body: JSON.stringify({ accessKeyId: keyId, secretAccessKey: secret, region }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          user.awsConnected = true; user.awsRegion = region;
+          if (data.awsAccountId) {
+            user.awsAccountId = data.awsAccountId;
+            const accEl = document.getElementById('stAwsAccountId');
+            if (accEl) accEl.value = data.awsAccountId;
+          }
+          const stored = JSON.parse(localStorage.getItem('user') || '{}');
+          stored.awsConnected = true; stored.awsRegion = region;
+          if (data.awsAccountId) stored.awsAccountId = data.awsAccountId;
+          localStorage.setItem('user', JSON.stringify(stored));
+          renderAwsStatus(true, region);
+          al.className = 'af-alert show ok-a';
+          al.innerHTML = '✅ &nbsp; AWS connected! Loading your data...';
+          const banner = document.getElementById('awsNotConnectedBanner');
+          if (banner) banner.remove();
+          setTimeout(() => { al.className = 'af-alert'; loadDashboard(); }, 1200);
+        } else {
+          al.className = 'af-alert show err-a';
+          al.innerHTML = '⚠️ &nbsp; ' + (data.message || 'Failed to connect.');
+        }
+      } catch (e) {
+        al.className = 'af-alert show err-a';
+        al.innerHTML = '⚠️ &nbsp; Server error. Make sure the backend is running.';
+      }
+      btn.classList.remove('loading'); btn.disabled = false;
+    }
+    async function disconnectAws() {
+      const btn = document.getElementById('disconnectBtn');
+      btn.classList.add('loading'); btn.disabled = true;
+      try {
+        await fetch(BASE_URL + '/api/aws/disconnect', {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+        });
+        user.awsConnected = false; user.awsRegion = null; user.awsAccountId = null;
+        const stored = JSON.parse(localStorage.getItem('user') || '{}');
+        stored.awsConnected = false; stored.awsRegion = null; stored.awsAccountId = null;
+        localStorage.setItem('user', JSON.stringify(stored));
+        const accEl = document.getElementById('stAwsAccountId');
+        if (accEl) accEl.value = 'Not connected';
+        renderAwsStatus(false, null);
+        showAwsNotConnectedBanner();
+      } catch (e) { console.error('Disconnect error:', e); }
+      btn.classList.remove('loading'); btn.disabled = false;
+    }
+    async function loadDashboard() {
+      const token = localStorage.getItem("token");
+
+      try {
+        const res = await fetch(BASE_URL + "/api/aws/dashboard", {
+          headers: { "Authorization": "Bearer " + token }
+        });
+
+        const data = await res.json();
+        if (data.awsNotConnected) { showAwsNotConnectedBanner(); return; }
+        if (!data.totalCost) return;
+
+        // ── KPI Cards ──────────────────────────────────────────
+        const spendEl = document.getElementById("spend");
+        const savingsEl = document.getElementById("savings");
+        const resourcesEl = document.getElementById("resources");
+
+        if (spendEl)     spendEl.innerText     = "$" + (Math.abs(parseFloat(data.totalCost)) || 0).toFixed(2);
+        if (savingsEl)   savingsEl.innerText   = "$" + data.savings;
+        if (resourcesEl) resourcesEl.innerText = data.resources;
+
+        // ── EC2 / S3 / RDS counts if elements exist ────────────
+        const ec2El = document.getElementById("ec2Count");
+        const s3El  = document.getElementById("s3Count");
+        const rdsEl = document.getElementById("rdsCount");
+        const recEl = document.getElementById("recCount");
+
+        if (ec2El) ec2El.innerText = data.ec2?.total ?? "-";
+        if (s3El)  s3El.innerText  = data.s3?.buckets ?? "-";
+        if (rdsEl) rdsEl.innerText = data.rds?.instances ?? "-";
+        if (recEl) recEl.innerText = data.openRecommendations ?? "-";
+
+        // ── Sidebar badge & notif bar ─────────────────────────
+        awsData = data;
+        // ── Update AWS Account ID in Settings if returned ─────
+        if (data.awsAccountId) {
+          user.awsAccountId = data.awsAccountId;
+          const accEl = document.getElementById('stAwsAccountId');
+          if (accEl) accEl.value = data.awsAccountId;
+          const stored = JSON.parse(localStorage.getItem('user') || '{}');
+          stored.awsAccountId = data.awsAccountId;
+          localStorage.setItem('user', JSON.stringify(stored));
+        }
+        const badge = document.getElementById('recsBadge');
+        if (badge) badge.textContent = data.openRecommendations || 0;
+        const openRecsEl = document.getElementById('openRecs');
+        if (openRecsEl) openRecsEl.innerText = data.openRecommendations || 0;
+        const rBadge = document.getElementById('regionsBadge');
+        if (rBadge) rBadge.textContent = data.costByRegion?.length || 0;
+        const aBadge = document.getElementById('alertsBadge');
+        if (aBadge) aBadge.textContent = (data.ec2?.stopped || 0) + (data.ebs?.unattached || 0);
+        const notifSav = document.getElementById('notifSavings');
+        const notifRec = document.getElementById('notifRecCount');
+        if (notifSav) notifSav.textContent = '$' + data.savings;
+        if (notifRec) notifRec.textContent = data.openRecommendations || 0;
+        // ── Drive all pages with real data ───────────────────────
+        updateDonut(data.costByService, data.totalCost);
+        renderSvcs(data);
+        renderRecs(buildRecsFromData(data));
+        renderAlerts(data);
+        renderRegions(data);
+        renderAnalytics(data);
+        renderTrendChart(data.monthlyCosts);
+        renderHeatmap(data.dailyCosts);
+        renderBudgets(data);
+        renderEC2Instances(data.ec2?.instances || []);
+        await loadCustomAlerts();
+        await loadCustomBudgets();
+        // ── Auto-refresh every 5 minutes (once only)
+        if (!window._autoRefresh) window._autoRefresh = setInterval(loadDashboard, 5 * 60 * 1000);
+        console.log("✅ AWS Real Data Loaded:", data);
+
+      } catch (err) {
+        console.error("Dashboard error:", err);
+      }
+    }
+    // ── New Alert Modal ──────────────────────────────────────────────────────
+    let _modalMode = 'alert';
+    function openNewAlertModal() {
+      _modalMode = 'alert';
+      document.getElementById('malTitle').textContent = '🔔 Create New Alert';
+      document.getElementById('malSub').textContent   = 'Set a custom spend threshold to be alerted when costs exceed your limit.';
+      document.getElementById('newAlertModal').classList.add('on');
+      document.getElementById('alertName').value = '';
+      document.getElementById('alertThreshold').value = '';
+      document.getElementById('newAlertErr').className = 'af-alert';
+    }
+    function openNewBudgetModal() {
+      _modalMode = 'budget';
+      document.getElementById('malTitle').textContent = '📊 Create Budget Rule';
+      document.getElementById('malSub').textContent   = 'Set a monthly spend limit for a service or total AWS cost.';
+      document.getElementById('newAlertModal').classList.add('on');
+      document.getElementById('alertName').value = '';
+      document.getElementById('alertThreshold').value = '';
+      document.getElementById('newAlertErr').className = 'af-alert';
+    }
+    function closeNewAlertModal() {
+      document.getElementById('newAlertModal').classList.remove('on');
+    }
+    async function createNewAlert() {
+      const name      = document.getElementById('alertName').value.trim();
+      const service   = document.getElementById('alertService').value;
+      const threshold = parseFloat(document.getElementById('alertThreshold').value);
+      const errEl     = document.getElementById('newAlertErr');
+      if (!name) { errEl.className = 'af-alert show err-a'; errEl.innerHTML = '⚠️ &nbsp; Alert name is required.'; return; }
+      if (!threshold || threshold <= 0) { errEl.className = 'af-alert show err-a'; errEl.innerHTML = '⚠️ &nbsp; Enter a valid threshold amount.'; return; }
+      const isBudget = (_modalMode === 'budget');
+      const endpoint = isBudget ? '/api/user/budgets' : '/api/user/alerts';
+      closeNewAlertModal();
+      const el = document.getElementById('alertsList');
+      if (!isBudget && el) {
+        const div = document.createElement('div');
+        div.className = 'alert-item';
+        div.style.cssText = 'border-color:rgba(14,165,233,.2);animation:kIn .3s ease both';
+        div.innerHTML = `<span style="font-size:15px;flex-shrink:0">🔵</span><div><div class="ai-title" style="color:var(--sky)">${name}</div><div class="ai-body">${service} — threshold: $${threshold.toLocaleString()}/month</div></div><div class="ai-time">Just now</div>`;
+        el.prepend(div);
+      }
+      try {
+        await fetch(BASE_URL + endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+          body: JSON.stringify({ name, service, threshold })
+        });
+        if (isBudget) await loadCustomBudgets();
+      } catch(e) { console.log('Save error:', e); }
+      showToast('✅ ' + (isBudget ? 'Budget "' : 'Alert "') + name + '" created!');
+    }
+    function showToast(msg) {
+      const t = document.createElement('div');
+      t.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9000;padding:12px 18px;background:var(--panel);border:1px solid rgba(45,212,191,.25);border-radius:var(--r2);font-size:13px;color:#5eead4;box-shadow:var(--sh2);animation:authIn .3s cubic-bezier(.16,1,.3,1) both;';
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .4s'; setTimeout(() => t.remove(), 400); }, 3000);
+    }
+    // ── Load custom alerts from backend ─────────────────────────────────────────
+    async function loadCustomAlerts() {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      try {
+        const res  = await fetch(BASE_URL + '/api/user/alerts', { headers: { 'Authorization': 'Bearer ' + token } });
+        const data = await res.json();
+        const el   = document.getElementById('alertsList');
+        if (!el || !data.items?.length) return;
+        // Remove previously appended custom alerts to avoid duplicates on refresh
+        el.querySelectorAll('.custom-alert-row').forEach(r => r.remove());
+        data.items.forEach(a => {
+          const div = document.createElement('div');
+          div.className = 'alert-item custom-alert-row';
+          div.style.borderColor = 'rgba(14,165,233,.2)';
+          div.dataset.alertId = a._id;
+          div.innerHTML = `<span style="font-size:15px;flex-shrink:0">🔵</span><div style="flex:1"><div class="ai-title" style="color:var(--sky)">${a.name}</div><div class="ai-body">${a.service} — threshold: $${a.threshold.toLocaleString()}/month</div></div><div class="ai-time">${new Date(a.createdAt).toLocaleDateString()}</div><button class="act-btn" style="margin-left:10px;color:var(--red);border-color:rgba(248,113,113,.2);flex-shrink:0" onclick="deleteCustomAlert('${a._id}', this)">✕ Delete</button>`;
+          el.appendChild(div);
+        });
+      } catch(e) { console.log('loadCustomAlerts:', e); }
+    }
+    // ── Delete a custom alert ────────────────────────────────────────────────────
+    async function deleteCustomAlert(id, btn) {
+      try {
+        btn.disabled = true; btn.textContent = '...';
+        await fetch(BASE_URL + '/api/user/' + id, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const row = btn.closest('.custom-alert-row');
+        if (row) { row.style.opacity = '0'; row.style.transition = 'opacity .3s'; setTimeout(() => row.remove(), 300); }
+        showToast('🗑️ Alert deleted.');
+      } catch(e) { btn.disabled = false; btn.textContent = '✕ Delete'; }
+    }
+    // ── Render individual EC2 instances ────────────────────────────────────────
+    function renderEC2Instances(instances) {
+      const tbody  = document.getElementById('ec2InstanceTable');
+      const sumEl  = document.getElementById('ec2StatusSummary');
+      if (!tbody) return;
+      if (!instances?.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--tx2);padding:20px;font-family:var(--mono);font-size:11px">☁️ No EC2 instances found in this region.</td></tr>';
+        return;
+      }
+      const running = instances.filter(i => i.state === 'running').length;
+      const stopped = instances.filter(i => i.state === 'stopped').length;
+      if (sumEl) sumEl.textContent = `${running} running • ${stopped} stopped • ${instances.length} total`;
+      const stateStyle = (s) => {
+        if (s === 'running')    return 'color:var(--teal);font-weight:600';
+        if (s === 'stopped')    return 'color:var(--red);font-weight:600';
+        if (s === 'terminated') return 'color:var(--tx2)';
+        return 'color:var(--gold);font-weight:600';
+      };
+      const stateIcon = (s) => s === 'running' ? '●' : s === 'stopped' ? '●' : '◌';
+      const fmt = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'2-digit' }) : '—';
+      tbody.innerHTML = instances.map(i =>
+        `<tr>
+          <td><div class="rid">${i.name || '—'}</div></td>
+          <td style="font-family:var(--mono);font-size:10px;color:var(--tx2)">${i.id}</td>
+          <td><span class="chip" style="font-size:9px;padding:3px 8px">${i.type}</span></td>
+          <td style="${stateStyle(i.state)}">${stateIcon(i.state)} ${i.state}</td>
+          <td style="font-family:var(--mono);font-size:10px;color:var(--tx2)">${fmt(i.launchTime)}</td>
+        </tr>`
+      ).join('');
+    }
+    // ── Load custom budgets from backend ─────────────────────────────────────
+    async function loadCustomBudgets() {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      try {
+        const res  = await fetch(BASE_URL + '/api/user/budgets', { headers: { 'Authorization': 'Bearer ' + token } });
+        const data = await res.json();
+        const tbody = document.getElementById('budgetBody');
+        const badge = document.getElementById('budgetsBadge');
+        if (!tbody || !data.items?.length) return;
+        if (badge) { badge.textContent = data.items.length; badge.style.display = ''; }
+        // Remove previously appended custom rows to avoid duplicates on refresh
+        tbody.querySelectorAll('.custom-budget-row').forEach(r => r.remove());
+
+        // Build a quick lookup: service name → cost from real AWS data
+        const svcCostMap = {};
+        (awsData?.costByService || []).forEach(s => {
+          svcCostMap[s.name.toLowerCase()] = parseFloat(s.cost);
+        });
+        const totalSpend = awsData?.totalCost ? parseFloat(awsData.totalCost) : 0;
+
+        const rows = data.items.map(b => {
+          const limit = b.threshold;
+          // If the budget's service matches a known AWS service, use that cost; else use total
+          const svcLower = (b.service || '').toLowerCase();
+          let used = totalSpend; // default: total AWS spend
+          if (svcLower !== 'total aws spend') {
+            // Try to find matching service in cost data
+            const matchKey = Object.keys(svcCostMap).find(k => k.includes(svcLower) || svcLower.includes(k.split(' ').pop()));
+            if (matchKey !== undefined) used = svcCostMap[matchKey];
+          }
+          const rem   = Math.max(0, limit - used).toFixed(2);
+          const pct   = Math.min(Math.round(used / limit * 100), 100);
+          const clr   = pct > 85 ? 'var(--red)' : pct > 60 ? 'var(--gold)' : 'var(--teal)';
+          const tag   = pct > 85 ? '<span class="sev-tag sv-h">● Critical</span>' : pct > 60 ? '<span class="sev-tag sv-m">◑ Warning</span>' : '<span class="sev-tag sv-l">○ Healthy</span>';
+          return `<tr class="custom-budget-row"><td><div class="rid">${b.name}</div><div class="rtype">${b.service}</div></td><td style="color:var(--tx1);font-family:var(--mono);font-size:11px">$${limit.toLocaleString()}</td><td style="font-weight:600;font-family:var(--mono);font-size:11px">$${parseFloat(used).toFixed(2)}</td><td style="color:${clr};font-family:var(--mono);font-size:11px">$${rem}</td><td>${tag}</td><td><div class="prog bprog"><div class="prog-fill" style="background:${clr};width:${pct}%"></div></div></td><td><button class="act-btn" style="color:var(--red);border-color:rgba(248,113,113,.2)" onclick="deleteCustomBudget('${b._id}', this)">✕</button></td></tr>`;
+        }).join('');
+        tbody.insertAdjacentHTML('afterbegin', rows);
+      } catch(e) { console.log('loadCustomBudgets:', e); }
+    }
+    // ── Delete a custom budget ───────────────────────────────────────────────
+    async function deleteCustomBudget(id, btn) {
+      try {
+        btn.disabled = true; btn.textContent = '...';
+        await fetch(BASE_URL + '/api/user/' + id, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const row = btn.closest('.custom-budget-row');
+        if (row) { row.style.opacity = '0'; row.style.transition = 'opacity .3s'; setTimeout(() => row.remove(), 300); }
+        showToast('🗑️ Budget deleted.');
+      } catch(e) { btn.disabled = false; btn.textContent = '✕'; }
+    }
+    window.onload = () => {
+      // ── Try to restore existing session ──────────────────────────────────
+      const savedToken = localStorage.getItem('token');
+      const savedUser  = localStorage.getItem('user');
+      setTimeout(() => document.getElementById('loader').classList.add('out'), 700);
+      if (savedToken && savedUser) {
+        try {
+          user = JSON.parse(savedUser);
+          launchApp();
+          loadDashboard();
+          return; // skip login screen
+        } catch(e) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
+      }
+      // ── No valid session → show login ─────────────────────────────────────
+      document.getElementById('auth').classList.add('show');
+      document.getElementById('app').classList.remove('on');
+    };
+
+
+
+
+  </script>
+</body>
+
+</html>
