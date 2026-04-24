@@ -47,146 +47,141 @@ const getDashboardData = async (req, res) => {
     const today = new Date();
     const { ceClient, ec2Client, s3Client, rdsClient } = getClients(req.user);
 
-    // 1️⃣  Total cost (this month)
-    const costRes = await ceClient.send(new GetCostAndUsageCommand({
+    // ── Prepare all requests to run concurrently ──────────────────────────────
+    const costReq = ceClient.send(new GetCostAndUsageCommand({
       TimePeriod: { Start: start, End: end },
-      Granularity: "MONTHLY",
-      Metrics: ["UnblendedCost"],
+      Granularity: "MONTHLY", Metrics: ["UnblendedCost"],
     }));
-    const totalCost = parseFloat(
-      costRes.ResultsByTime?.[0]?.Total?.UnblendedCost?.Amount || 0
-    ).toFixed(2);
 
-    // 2️⃣  Cost by service (top 6)
-    const svcRes = await ceClient.send(new GetCostAndUsageCommand({
+    const svcReq = ceClient.send(new GetCostAndUsageCommand({
       TimePeriod: { Start: start, End: end },
-      Granularity: "MONTHLY",
-      Metrics: ["UnblendedCost"],
+      Granularity: "MONTHLY", Metrics: ["UnblendedCost"],
       GroupBy: [{ Type: "DIMENSION", Key: "SERVICE" }],
     }));
-    const serviceGroups = svcRes.ResultsByTime?.[0]?.Groups || [];
-    const costByService = serviceGroups
-      .map(g => ({
-        name: g.Keys[0],
-        cost: parseFloat(g.Metrics.UnblendedCost.Amount).toFixed(2),
-      }))
-      .sort((a, b) => b.cost - a.cost)
-      .slice(0, 6);
 
-    // 3️⃣  EC2 instances
+    const ec2Req = ec2Client.send(new DescribeInstancesCommand({}));
+    const ebsReq = ec2Client.send(new DescribeVolumesCommand({}));
+    const s3Req  = s3Client.send(new ListBucketsCommand({}));
+    const rdsReq = rdsClient.send(new DescribeDBInstancesCommand({}));
+
+    const thirtyFiveAgo = new Date(today); thirtyFiveAgo.setDate(today.getDate() - 35);
+    const dailyReq = ceClient.send(new GetCostAndUsageCommand({
+      TimePeriod: { Start: thirtyFiveAgo.toISOString().split("T")[0], End: end },
+      Granularity: "DAILY", Metrics: ["UnblendedCost"],
+    }));
+
+    const twelveAgo = new Date(today); twelveAgo.setMonth(today.getMonth() - 11); twelveAgo.setDate(1);
+    const monthlyReq = ceClient.send(new GetCostAndUsageCommand({
+      TimePeriod: { Start: twelveAgo.toISOString().split("T")[0], End: end },
+      Granularity: "MONTHLY", Metrics: ["UnblendedCost"],
+    }));
+
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    const fStart = tomorrow.toISOString().split("T")[0];
+    const fEnd   = nextMonth.toISOString().split("T")[0];
+    let forecastReq = Promise.resolve(null);
+    if (fStart < fEnd) {
+      forecastReq = ceClient.send(new GetCostForecastCommand({
+        TimePeriod: { Start: fStart, End: fEnd },
+        Metric: "UNBLENDED_COST", Granularity: "MONTHLY",
+      }));
+    }
+
+    const regionReq = ceClient.send(new GetCostAndUsageCommand({
+      TimePeriod: { Start: start, End: end },
+      Granularity: "MONTHLY", Metrics: ["UnblendedCost"],
+      GroupBy: [{ Type: "DIMENSION", Key: "REGION" }],
+    }));
+
+    // ── Execute concurrently ───────────────────────────────────────────────────
+    const [
+      costRes, svcRes, ec2Res, ebsRes, s3Res, rdsRes, dailyRes, monthlyRes, fRes, regionRes
+    ] = await Promise.allSettled([
+      costReq, svcReq, ec2Req, ebsReq, s3Req, rdsReq, dailyReq, monthlyReq, forecastReq, regionReq
+    ]);
+
+    // 1️⃣ Total cost
+    let totalCost = "0.00";
+    if (costRes.status === "fulfilled") {
+      totalCost = parseFloat(costRes.value.ResultsByTime?.[0]?.Total?.UnblendedCost?.Amount || 0).toFixed(2);
+    } else { console.warn("Total cost skipped:", costRes.reason?.message); }
+
+    // 2️⃣ Cost by service
+    let costByService = [];
+    if (svcRes.status === "fulfilled") {
+      costByService = (svcRes.value.ResultsByTime?.[0]?.Groups || [])
+        .map(g => ({ name: g.Keys[0], cost: parseFloat(g.Metrics.UnblendedCost.Amount).toFixed(2) }))
+        .sort((a, b) => b.cost - a.cost).slice(0, 6);
+    } else { console.warn("Service cost skipped:", svcRes.reason?.message); }
+
+    // 3️⃣ EC2 instances
     let ec2Count = 0, runningEC2 = 0, stoppedEC2 = 0, ec2Instances = [];
-    try {
-      const ec2Res = await ec2Client.send(new DescribeInstancesCommand({}));
-      const allInstances = ec2Res.Reservations?.flatMap(r => r.Instances) || [];
+    if (ec2Res.status === "fulfilled") {
+      const allInstances = ec2Res.value.Reservations?.flatMap(r => r.Instances) || [];
       ec2Count   = allInstances.length;
       runningEC2 = allInstances.filter(i => i.State?.Name === "running").length;
       stoppedEC2 = allInstances.filter(i => i.State?.Name === "stopped").length;
       ec2Instances = allInstances.map(i => ({
-        id:         i.InstanceId,
-        name:       i.Tags?.find(t => t.Key === "Name")?.Value || "—",
-        type:       i.InstanceType,
-        state:      i.State?.Name,
-        launchTime: i.LaunchTime,
+        id: i.InstanceId, name: i.Tags?.find(t => t.Key === "Name")?.Value || "—",
+        type: i.InstanceType, state: i.State?.Name, launchTime: i.LaunchTime,
       })).slice(0, 25);
-    } catch (e) { console.warn("EC2 fetch skipped:", e.message); }
+    } else { console.warn("EC2 skipped:", ec2Res.reason?.message); }
 
-    // 4️⃣  EBS volumes
+    // 4️⃣ EBS volumes
     let volumeCount = 0, unattachedVolumes = 0;
-    try {
-      const volRes = await ec2Client.send(new DescribeVolumesCommand({}));
-      const vols = volRes.Volumes || [];
+    if (ebsRes.status === "fulfilled") {
+      const vols = ebsRes.value.Volumes || [];
       volumeCount       = vols.length;
       unattachedVolumes = vols.filter(v => v.State === "available").length;
-    } catch (e) { console.warn("EBS fetch skipped:", e.message); }
+    } else { console.warn("EBS skipped:", ebsRes.reason?.message); }
 
-    // 5️⃣  S3 buckets
+    // 5️⃣ S3 buckets
     let s3Count = 0;
-    try {
-      const s3Res = await s3Client.send(new ListBucketsCommand({}));
-      s3Count = (s3Res.Buckets || []).length;
-    } catch (e) { console.warn("S3 fetch skipped:", e.message); }
+    if (s3Res.status === "fulfilled") {
+      s3Count = (s3Res.value.Buckets || []).length;
+    } else { console.warn("S3 skipped:", s3Res.reason?.message); }
 
-    // 6️⃣  RDS instances
+    // 6️⃣ RDS instances
     let rdsCount = 0;
-    try {
-      const rdsRes = await rdsClient.send(new DescribeDBInstancesCommand({}));
-      rdsCount = (rdsRes.DBInstances || []).length;
-    } catch (e) { console.warn("RDS fetch skipped:", e.message); }
+    if (rdsRes.status === "fulfilled") {
+      rdsCount = (rdsRes.value.DBInstances || []).length;
+    } else { console.warn("RDS skipped:", rdsRes.reason?.message); }
 
-    // 7️⃣  Last 35 days daily costs (heatmap + 7-day total)
-    let last7DaysCost = "0.00";
-    let dailyCosts = [];
-    try {
-      const thirtyFiveAgo = new Date(today);
-      thirtyFiveAgo.setDate(today.getDate() - 35);
-      const dailyRes = await ceClient.send(new GetCostAndUsageCommand({
-        TimePeriod: { Start: thirtyFiveAgo.toISOString().split("T")[0], End: end },
-        Granularity: "DAILY", Metrics: ["UnblendedCost"],
-      }));
-      const dailyResults = dailyRes.ResultsByTime || [];
+    // 7️⃣ Daily costs
+    let last7DaysCost = "0.00", dailyCosts = [];
+    if (dailyRes.status === "fulfilled") {
+      const dailyResults = dailyRes.value.ResultsByTime || [];
       dailyCosts = dailyResults.map(r => ({
-        date: r.TimePeriod.Start,
-        cost: parseFloat(r.Total.UnblendedCost.Amount).toFixed(4),
+        date: r.TimePeriod.Start, cost: parseFloat(r.Total.UnblendedCost.Amount).toFixed(4),
       }));
-      last7DaysCost = dailyResults
-        .slice(-7)
-        .reduce((s, r) => s + parseFloat(r.Total.UnblendedCost.Amount), 0)
-        .toFixed(2) || "0.00";
-    } catch (e) { console.warn("Daily cost fetch skipped:", e.message); }
+      last7DaysCost = dailyResults.slice(-7).reduce((s, r) => s + parseFloat(r.Total.UnblendedCost.Amount), 0).toFixed(2) || "0.00";
+    } else { console.warn("Daily cost skipped:", dailyRes.reason?.message); }
 
-    // 8️⃣  12-month cost history
+    // 8️⃣ Monthly costs
     let monthlyCosts = [];
-    try {
-      const twelveAgo = new Date(today);
-      twelveAgo.setMonth(today.getMonth() - 11);
-      twelveAgo.setDate(1);
-      const histRes = await ceClient.send(new GetCostAndUsageCommand({
-        TimePeriod: { Start: twelveAgo.toISOString().split("T")[0], End: end },
-        Granularity: "MONTHLY", Metrics: ["UnblendedCost"],
-      }));
-      monthlyCosts = histRes.ResultsByTime?.map(r => ({
-        month: r.TimePeriod.Start.substring(0, 7),
-        cost:  parseFloat(r.Total.UnblendedCost.Amount).toFixed(2),
+    if (monthlyRes.status === "fulfilled") {
+      monthlyCosts = monthlyRes.value.ResultsByTime?.map(r => ({
+        month: r.TimePeriod.Start.substring(0, 7), cost: parseFloat(r.Total.UnblendedCost.Amount).toFixed(2),
       })) || [];
-    } catch (e) { console.warn("Monthly history skipped:", e.message); }
+    } else { console.warn("Monthly cost skipped:", monthlyRes.reason?.message); }
 
-    // 9️⃣  Cost forecast
+    // 9️⃣ Forecast
     let forecastedCost = "0.00";
-    try {
-      const tomorrow  = new Date(today); tomorrow.setDate(today.getDate() + 1);
-      const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-      const fStart = tomorrow.toISOString().split("T")[0];
-      const fEnd   = nextMonth.toISOString().split("T")[0];
-      if (fStart < fEnd) {
-        const fRes = await ceClient.send(new GetCostForecastCommand({
-          TimePeriod: { Start: fStart, End: fEnd },
-          Metric: "UNBLENDED_COST", Granularity: "MONTHLY",
-        }));
-        forecastedCost = parseFloat(fRes.Total.Amount).toFixed(2);
-      }
-    } catch (e) { console.warn("Forecast skipped:", e.message); }
+    if (fRes.status === "fulfilled") {
+      forecastedCost = parseFloat(fRes.value.Total?.Amount || 0).toFixed(2);
+    } else { console.warn("Forecast skipped:", fRes.reason?.message); }
 
-    // 🔟  Cost by region (top 4)
+    // 🔟 Region costs
     let costByRegion = [];
-    try {
-      const regionRes = await ceClient.send(new GetCostAndUsageCommand({
-        TimePeriod: { Start: start, End: end },
-        Granularity: "MONTHLY",
-        Metrics: ["UnblendedCost"],
-        GroupBy: [{ Type: "DIMENSION", Key: "REGION" }],
-      }));
+    if (regionRes.status === "fulfilled") {
       const totalCostNum = parseFloat(totalCost);
-      costByRegion = (regionRes.ResultsByTime?.[0]?.Groups || [])
+      costByRegion = (regionRes.value.ResultsByTime?.[0]?.Groups || [])
         .map(g => ({
-          name: g.Keys[0],
-          cost: parseFloat(g.Metrics.UnblendedCost.Amount).toFixed(2),
-          pct:  totalCostNum > 0
-            ? Math.round((parseFloat(g.Metrics.UnblendedCost.Amount) / totalCostNum) * 100)
-            : 0,
-        }))
-        .sort((a, b) => b.cost - a.cost)
-        .slice(0, 4);
-    } catch (e) { console.warn("Region cost fetch skipped:", e.message); }
+          name: g.Keys[0], cost: parseFloat(g.Metrics.UnblendedCost.Amount).toFixed(2),
+          pct: totalCostNum > 0 ? Math.round((parseFloat(g.Metrics.UnblendedCost.Amount) / totalCostNum) * 100) : 0,
+        })).sort((a, b) => b.cost - a.cost).slice(0, 4);
+    } else { console.warn("Region cost skipped:", regionRes.reason?.message); }
 
     const totalResources   = ec2Count + volumeCount + s3Count + rdsCount;
     const estimatedSavings = (unattachedVolumes * 24 + stoppedEC2 * 15).toFixed(2);

@@ -14,8 +14,12 @@ const app = express();
 app.use(express.json());
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow: no origin (file://, curl, mobile), or known localhost ports
-    const allowed = ['http://localhost:5000', 'http://127.0.0.1:5000', 'http://localhost:3000'];
+    const allowed = [
+      'http://localhost:5000',
+      'http://127.0.0.1:5000',
+      'http://localhost:3000',
+      'https://cloud-project-ausj.onrender.com'  // ← add this
+    ];
     if (!origin || allowed.includes(origin)) {
       callback(null, true);
     } else {
@@ -66,6 +70,5 @@ app.get("/", (req, res) => {
 });
 
 // server start (last me hona chahiye)
-app.listen(5000, () => {
-    console.log("Server running on port 5000");
-});
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on ${PORT}`));
