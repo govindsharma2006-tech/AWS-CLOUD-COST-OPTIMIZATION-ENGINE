@@ -7,13 +7,19 @@ const User = require("../models/User");
 const Alert = require("../models/Alert");
 const { encrypt, decrypt } = require("../utils/encrypt");
 const sendEmail = require("../utils/sendEmail");
+const NodeCache = require("node-cache");
+
+// Cache dashboard data for 15 minutes (900 seconds)
+const dashboardCache = new NodeCache({ stdTTL: 900 });
 
 // ─── Per-user AWS client factory ─────────────────────────────────────────────
 function getClients(user) {
-  const creds = user?.awsConnected && user?.awsAccessKeyId
-    ? { accessKeyId: decrypt(user.awsAccessKeyId), secretAccessKey: decrypt(user.awsSecretAccessKey) }
-    : { accessKeyId: process.env.AWS_ACCESS_KEY_ID, secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY };
-  const region = (user?.awsConnected ? user.awsRegion : null) || process.env.AWS_REGION || "us-east-1";
+  if (!user || !user.awsConnected || !user.awsAccessKeyId) {
+    throw new Error("AWS credentials not configured for this user");
+  }
+  
+  const creds = { accessKeyId: decrypt(user.awsAccessKeyId), secretAccessKey: decrypt(user.awsSecretAccessKey) };
+  const region = user.awsRegion || "us-east-1";
   return {
     ceClient:  new CostExplorerClient({ region: "us-east-1", credentials: creds }),
     ec2Client: new EC2Client({ region, credentials: creds }),
@@ -37,9 +43,16 @@ function getMonthRange() {
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 const getDashboardData = async (req, res) => {
-  const hasServerCreds = !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY);
-  if (!req.user?.awsConnected && !hasServerCreds) {
+  if (!req.user?.awsConnected) {
     return res.status(200).json({ awsNotConnected: true });
+  }
+
+  const userId = req.user._id.toString();
+  const cacheKey = `dashboardData_${userId}`;
+  const cachedData = dashboardCache.get(cacheKey);
+
+  if (cachedData) {
+    return res.json({ ...cachedData, cached: true });
   }
 
   try {
@@ -217,7 +230,7 @@ const getDashboardData = async (req, res) => {
       console.warn("[Email Alert Check] Skipped:", emailErr.message);
     }
 
-    res.json({
+    const responseData = {
       totalCost,
       savings: estimatedSavings,
       resources: totalResources,
@@ -234,7 +247,11 @@ const getDashboardData = async (req, res) => {
       forecastedCost,
       awsAccountId: req.user?.awsAccountId || null,
       period: { start, end },
-    });
+    };
+
+    dashboardCache.set(cacheKey, responseData);
+
+    res.json(responseData);
 
   } catch (error) {
     console.error("AWS Dashboard Error:", error);
@@ -283,6 +300,9 @@ const saveAwsCredentials = async (req, res) => {
     awsConnected:       true,
     awsAccountId:       awsAccountId,
   });
+
+  dashboardCache.del(`dashboardData_${req.user._id.toString()}`);
+
   res.json({ success: true, message: "AWS account connected successfully ✅", awsAccountId });
 };
 
@@ -294,6 +314,9 @@ const disconnectAws = async (req, res) => {
     awsRegion:          null,
     awsConnected:       false,
   });
+
+  dashboardCache.del(`dashboardData_${req.user._id.toString()}`);
+
   res.json({ success: true, message: "AWS account disconnected." });
 };
 

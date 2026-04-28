@@ -1,60 +1,91 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CloudLens — AWS Cost Intelligence</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,5 95,27.5 95,72.5 50,95 5,72.5 5,27.5' fill='%230ea5e9'/><text y='.9em' font-size='60' x='22' fill='white'>☁</text></svg>" />
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,5 95,27.5 95,72.5 50,95 5,72.5 5,27.5' fill='%230ea5e9'/><text y='.9em' font-size='60' x='22' fill='white'>☁</text></svg>" />
   <link
-    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     :root {
-      --void: #030508;
-      --base: #07090f;
-      --ink: #0b0e18;
-      --depth: #0e1220;
-      --panel: #111828;
-      --surface: #161e2e;
-      --lift: #1b2438;
-      --rim0: rgba(255, 255, 255, 0.04);
-      --rim1: rgba(255, 255, 255, 0.07);
-      --rim2: rgba(255, 255, 255, 0.12);
-      --rim3: rgba(255, 255, 255, 0.18);
-      --sky: #0ea5e9;
-      --sky-dim: rgba(14, 165, 233, 0.12);
-      --sky-glo: rgba(14, 165, 233, 0.22);
-      --sky-mist: rgba(14, 165, 233, 0.06);
-      --teal: #0f766e;
-      --teal-dim: rgba(15, 118, 110, 0.12);
-      --ember: #fb923c;
-      --ember-dim: rgba(251, 146, 60, 0.12);
-      --rose: #f472b6;
-      --rose-dim: rgba(244, 114, 182, 0.12);
-      --lime: #a3e635;
-      --lime-dim: rgba(163, 230, 53, 0.1);
-      --gold: #fcd34d;
-      --gold-dim: rgba(252, 211, 77, 0.1);
-      --violet: #c084fc;
-      --red: #f87171;
-      --red-dim: rgba(248, 113, 113, 0.12);
-      --tx0: #f8fafc;
-      --tx1: #94a3b8;
-      --tx2: #475569;
-      --tx3: #1e2d40;
-      --display: 'Outfit', sans-serif;
+      --void: #09090b;
+      --base: #09090b;
+      --ink: #000000;
+      --depth: #09090b;
+      --panel: #121214;
+      --surface: #1e1e22;
+      --lift: #2b2b30;
+      --rim0: #27272a;
+      --rim1: #3f3f46;
+      --rim2: #52525b;
+      --rim3: #71717a;
+      --sky: #4f46e5;
+      --sky-dim: rgba(79, 70, 229, 0.15);
+      --sky-glo: rgba(79, 70, 229, 0.25);
+      --sky-mist: rgba(79, 70, 229, 0.08);
+      --teal: #10b981;
+      --teal-dim: rgba(16, 185, 129, 0.15);
+      --ember: #f97316;
+      --ember-dim: rgba(249, 115, 22, 0.15);
+      --rose: #f43f5e;
+      --rose-dim: rgba(244, 63, 94, 0.15);
+      --lime: #84cc16;
+      --lime-dim: rgba(132, 204, 22, 0.15);
+      --gold: #f59e0b;
+      --gold-dim: rgba(245, 158, 11, 0.15);
+      --violet: #8b5cf6;
+      --red: #ef4444;
+      --red-dim: rgba(239, 68, 68, 0.15);
+      --tx0: #ffffff;
+      --tx1: #f4f4f5;
+      --tx2: #a1a1aa;
+      --tx3: #71717a;
+      --display: 'Inter', sans-serif;
       --body: 'Inter', sans-serif;
       --mono: 'JetBrains Mono', monospace;
       --r1: 6px;
       --r2: 10px;
-      --r3: 14px;
-      --r4: 18px;
-      --r5: 22px;
-      --sh1: 0 1px 3px rgba(0, 0, 0, .5);
-      --sh2: 0 4px 16px rgba(0, 0, 0, .55);
-      --sh3: 0 10px 40px rgba(0, 0, 0, .65);
-      --sh-sky: 0 0 50px rgba(14, 165, 233, .1);
+      --r3: 16px;
+      --r4: 20px;
+      --r5: 28px;
+      --sh1: 0 2px 4px rgba(0, 0, 0, 0.4);
+      --sh2: 0 8px 16px -2px rgba(0, 0, 0, 0.5);
+      --sh3: 0 16px 32px -4px rgba(0, 0, 0, 0.6);
+      --sh-sky: 0 0 0 transparent;
+    }
+
+    body[data-theme="light"] {
+      --void: #f8fafc;
+      --base: #f8fafc;
+      --ink: #ffffff;
+      --depth: #f1f5f9;
+      --panel: #ffffff;
+      --surface: #f1f5f9;
+      --lift: #e2e8f0;
+      --rim0: #e2e8f0;
+      --rim1: #cbd5e1;
+      --rim2: #94a3b8;
+      --rim3: #64748b;
+      --tx0: #0f172a;
+      --tx1: #334155;
+      --tx2: #64748b;
+      --tx3: #94a3b8;
+      --sh1: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.02);
+      --sh2: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.02);
+      --sh3: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+      --sky: #4f46e5;
+      --sky-dim: rgba(79, 70, 229, 0.08);
+      --teal: #0f766e;
+      --teal-dim: rgba(15, 118, 110, 0.08);
+      --gold: #d97706;
+      --gold-dim: rgba(217, 119, 6, 0.08);
+      --red: #b91c1c;
+      --red-dim: rgba(185, 28, 28, 0.08);
     }
 
     *,
@@ -78,15 +109,25 @@
       -webkit-font-smoothing: antialiased
     }
 
-    body::after {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='250'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='250' height='250' filter='url(%23g)' opacity='0.032'/%3E%3C/svg%3E");
-      pointer-events: none;
-      z-index: 9999;
-      opacity: .55
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
     }
+
+    ::-webkit-scrollbar-track {
+      background: var(--void);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--rim2);
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--rim3);
+    }
+
+
 
     #loader {
       position: fixed;
@@ -216,52 +257,15 @@
     }
 
     .auth-bg {
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse 900px 700px at 65% 15%, rgba(96, 184, 245, .055) 0%, transparent 65%), radial-gradient(ellipse 700px 700px at 15% 85%, rgba(45, 212, 191, .04) 0%, transparent 65%), radial-gradient(ellipse 500px 500px at 85% 70%, rgba(196, 132, 252, .025) 0%, transparent 70%)
+      display: none;
     }
 
     .auth-grid {
-      position: absolute;
-      inset: 0;
-      background-image: linear-gradient(rgba(96, 184, 245, .025) 1px, transparent 1px), linear-gradient(90deg, rgba(96, 184, 245, .025) 1px, transparent 1px);
-      background-size: 52px 52px;
-      mask-image: radial-gradient(ellipse 85% 85% at 50% 50%, black, transparent)
+      display: none;
     }
 
     .aurora {
-      position: absolute;
-      pointer-events: none;
-      filter: blur(100px);
-      border-radius: 50%;
-      animation: auroraMove 12s ease-in-out infinite
-    }
-
-    .a1 {
-      width: 600px;
-      height: 300px;
-      background: rgba(96, 184, 245, .07);
-      top: -100px;
-      right: -100px;
-      animation-delay: 0s
-    }
-
-    .a2 {
-      width: 400px;
-      height: 400px;
-      background: rgba(45, 212, 191, .05);
-      bottom: -100px;
-      left: -50px;
-      animation-delay: -5s
-    }
-
-    .a3 {
-      width: 300px;
-      height: 300px;
-      background: rgba(244, 114, 182, .035);
-      top: 40%;
-      right: 30%;
-      animation-delay: -3s
+      display: none;
     }
 
     @keyframes auroraMove {
@@ -289,9 +293,9 @@
       max-width: 96vw;
       background: var(--panel);
       border: 1px solid var(--rim1);
-      border-radius: var(--r5);
+      border-radius: var(--r4);
       overflow: hidden;
-      box-shadow: var(--sh3), var(--sh-sky), inset 0 1px 0 var(--rim3);
+      box-shadow: var(--sh3);
       animation: authIn .8s cubic-bezier(.16, 1, .3, 1) both
     }
 
@@ -393,12 +397,13 @@
       background: var(--depth);
       border: 1px solid var(--rim1);
       border-radius: var(--r2);
-      padding: 10px 14px;
+      padding: 12px 14px;
       color: var(--tx0);
       font-family: var(--body);
       font-size: 14px;
       outline: none;
-      transition: all .18s
+      transition: all .2s cubic-bezier(.16,1,.3,1);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
     }
 
     .fi::placeholder {
@@ -406,9 +411,9 @@
     }
 
     .fi:focus {
-      border-color: rgba(96, 184, 245, .5);
-      background: var(--surface);
-      box-shadow: 0 0 0 3px rgba(96, 184, 245, .08), inset 0 1px 0 rgba(255, 255, 255, .03)
+      border-color: var(--sky);
+      background: var(--base);
+      box-shadow: 0 0 0 3px var(--sky-dim), inset 0 1px 2px rgba(0,0,0,0.05);
     }
 
     .fi.err {
@@ -437,31 +442,33 @@
     .btn-primary {
       width: 100%;
       padding: 12px;
-      background: linear-gradient(135deg, var(--sky), #0284c7);
-      border: none;
+      background: linear-gradient(180deg, var(--sky) 0%, #3730a3 100%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-top-color: rgba(255, 255, 255, 0.2);
       border-radius: var(--r2);
       color: #ffffff;
       font-family: var(--display);
       font-size: 14px;
-      font-weight: 700;
+      font-weight: 500;
       cursor: pointer;
-      transition: all .2s;
+      transition: all .2s cubic-bezier(.16,1,.3,1);
       position: relative;
       overflow: hidden;
-      letter-spacing: .2px;
-      margin-top: 4px
+      margin-top: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
     }
 
     .btn-primary::before {
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(135deg, rgba(255, 255, 255, .18) 0%, transparent 55%)
+      background: linear-gradient(135deg, rgba(255, 255, 255, .1) 0%, transparent 50%);
     }
 
     .btn-primary:hover {
+      background: linear-gradient(180deg, #6366f1 0%, #4338ca 100%);
       transform: translateY(-1px);
-      box-shadow: 0 8px 28px rgba(96, 184, 245, .4)
+      box-shadow: 0 6px 12px rgba(79,70,229,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
     }
 
     .btn-primary:active {
@@ -568,23 +575,27 @@
     }
 
     .sb-hex {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, var(--sky), var(--teal));
-      clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+      width: 28px;
+      height: 28px;
+      background: var(--tx0);
+      border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
+      color: var(--void);
       font-size: 14px;
-      box-shadow: 0 4px 14px rgba(96, 184, 245, .3);
-      flex-shrink: 0
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.25);
+      flex-shrink: 0;
     }
 
     .sb-brand {
       font-family: var(--display);
-      font-size: 16px;
+      font-size: 17px;
       font-weight: 800;
-      letter-spacing: -.2px
+      letter-spacing: -.2px;
+      background: linear-gradient(135deg, var(--tx0) 30%, var(--tx2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     .sb-ver {
@@ -643,9 +654,10 @@
     }
 
     .ni.act {
-      background: var(--sky-mist);
-      color: var(--sky);
-      border: 1px solid rgba(96, 184, 245, .1)
+      background: var(--surface);
+      color: var(--tx0);
+      border: 1px solid var(--rim1);
+      box-shadow: var(--sh1);
     }
 
     .ni.act::before {
@@ -654,10 +666,10 @@
       left: 0;
       top: 20%;
       bottom: 20%;
-      width: 2px;
-      background: var(--sky);
-      border-radius: 0 2px 2px 0;
-      box-shadow: 0 0 8px var(--sky)
+      width: 3px;
+      background: var(--tx0);
+      border-radius: 0 4px 4px 0;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
     }
 
     .ni-ico {
@@ -761,10 +773,8 @@
 
     .tb {
       height: 56px;
-      background: rgba(7, 9, 15, .8);
+      background: var(--ink);
       border-bottom: 1px solid var(--rim0);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
       padding: 0 22px;
       display: flex;
       align-items: center;
@@ -781,20 +791,22 @@
     }
 
     .ham {
-      display: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       background: none;
       border: 1px solid var(--rim1);
-      border-radius: var(--r1);
-      padding: 5px 8px;
+      border-radius: var(--r2);
+      padding: 6px;
       color: var(--tx1);
       cursor: pointer;
-      font-size: 14px;
       transition: all .2s
     }
 
     .ham:hover {
       border-color: var(--rim2);
-      color: var(--tx0)
+      color: var(--tx0);
+      background: var(--surface);
     }
 
     .bc {
@@ -816,9 +828,8 @@
     }
 
     .env-selector:hover {
-      border-color: rgba(96, 184, 245, .3);
-      background: var(--sky-mist);
-      box-shadow: 0 2px 8px rgba(96, 184, 245, .05)
+      border-color: var(--rim2);
+      background: var(--lift);
     }
 
     .env-ico {
@@ -925,14 +936,15 @@
     }
 
     .tb-btn.hi {
-      background: var(--sky-dim);
-      border-color: rgba(96, 184, 245, .2);
-      color: var(--sky)
+      background: var(--tx0);
+      border-color: var(--tx0);
+      color: var(--void);
     }
 
     .tb-btn.hi:hover {
-      background: rgba(96, 184, 245, .15);
-      border-color: rgba(96, 184, 245, .35)
+      background: var(--tx1);
+      border-color: var(--tx1);
+      color: var(--void);
     }
 
     .main {
@@ -977,12 +989,12 @@
 
     .kpi {
       background: var(--panel);
-      border: 1px solid var(--rim0);
-      border-radius: var(--r4);
+      border: 1px solid var(--rim1);
+      border-radius: var(--r3);
       padding: 18px 20px;
       position: relative;
       overflow: hidden;
-      transition: border-color .2s, transform .2s, box-shadow .2s;
+      transition: border-color .2s, box-shadow .2s;
       animation: kIn .5s cubic-bezier(.16, 1, .3, 1) both;
       cursor: default
     }
@@ -1016,48 +1028,37 @@
     }
 
     .kpi:hover {
-      border-color: var(--rim1);
-      transform: translateY(-2px);
+      border-color: var(--rim2);
       box-shadow: var(--sh2)
     }
 
-    .kpi::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: var(--kg, var(--sky));
-      opacity: .7
-    }
-
-    .kpi::before {
-      content: '';
-      position: absolute;
-      top: -40px;
-      right: -40px;
-      width: 160px;
-      height: 160px;
-      background: radial-gradient(circle, var(--kglow, rgba(96, 184, 245, .06)) 0%, transparent 70%);
-      pointer-events: none
+    .kpi {
+      background: var(--panel);
+      border: 1px solid var(--rim1);
+      border-radius: var(--r3);
+      padding: 14px 16px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .2s, box-shadow .2s;
+      animation: kIn .5s cubic-bezier(.16, 1, .3, 1) both;
+      cursor: default
     }
 
     .kpi-row {
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
-      margin-bottom: 14px
+      margin-bottom: 8px
     }
 
     .kpi-icon {
-      width: 36px;
-      height: 36px;
+      width: 28px;
+      height: 28px;
       border-radius: var(--r2);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
+      font-size: 14px;
       background: var(--kibg, var(--sky-dim))
     }
 
@@ -1087,17 +1088,17 @@
 
     .kpi-val {
       font-family: var(--display);
-      font-size: 28px;
-      font-weight: 800;
+      font-size: 24px;
+      font-weight: 600;
       letter-spacing: -1px;
       line-height: 1;
-      margin-bottom: 3px;
-      color: var(--kc, var(--tx0))
+      margin-bottom: 4px;
+      color: var(--tx0);
     }
 
     .kpi-lbl {
       font-family: var(--mono);
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
       color: var(--tx0);
       opacity: 0.85;
@@ -1300,15 +1301,21 @@
 
     .tpanel {
       background: var(--panel);
-      border: 1px solid var(--rim0);
-      border-radius: var(--r4);
+      border: 1px solid var(--rim1);
+      border-radius: var(--r3);
       overflow: hidden;
       animation: kIn .5s cubic-bezier(.16, 1, .3, 1) .28s both;
-      margin-bottom: 18px
+      margin-bottom: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .tpanel:hover {
+      border-color: var(--rim2);
+      box-shadow: var(--sh2);
     }
 
     .tp-head {
-      padding: 14px 18px;
+      padding: 10px 14px;
       border-bottom: 1px solid var(--rim0);
       display: flex;
       align-items: center;
@@ -1357,7 +1364,7 @@
     }
 
     .dtbl th {
-      padding: 10px 16px;
+      padding: 8px 12px;
       text-align: left;
       font-family: var(--mono);
       font-size: 11px;
@@ -1370,7 +1377,7 @@
     }
 
     .dtbl td {
-      padding: 12px 16px;
+      padding: 10px 12px;
       font-size: 12px;
       border-bottom: 1px solid var(--rim1);
       transition: background .1s
@@ -1730,6 +1737,19 @@
       gap: 4px
     }
 
+    body.sb-collapsed .sb {
+      transform: translateX(-100%);
+    }
+
+    body.sb-collapsed .main {
+      margin-left: 0;
+      transition: margin-left .32s cubic-bezier(.16, 1, .3, 1);
+    }
+
+    .main {
+      transition: margin-left .32s cubic-bezier(.16, 1, .3, 1);
+    }
+
     @media(max-width:1120px) {
       .kpi-grid {
         grid-template-columns: repeat(2, 1fr)
@@ -1793,17 +1813,97 @@
     }
 
     /* ─── New Alert Modal ─────────────────────────────────────────────────── */
-    .mal-backdrop { display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);z-index:300;align-items:center;justify-content:center }
-    .mal-backdrop.on { display:flex }
-    .mal-box { background:var(--panel);border:1px solid var(--rim1);border-radius:var(--r4);padding:28px 32px;width:440px;max-width:95vw;box-shadow:var(--sh3);animation:authIn .35s cubic-bezier(.16,1,.3,1) both }
-    .mal-title { font-family:var(--display);font-size:17px;font-weight:800;letter-spacing:-.3px;margin-bottom:4px }
-    .mal-sub { font-size:12px;color:var(--tx1);margin-bottom:20px }
-    .mal-foot { display:flex;gap:10px;margin-top:20px;justify-content:flex-end }
-    .btn-ghost { padding:9px 18px;background:var(--depth);border:1px solid var(--rim1);border-radius:var(--r2);color:var(--tx1);font-family:var(--display);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s }
-    .btn-ghost:hover { border-color:var(--rim2);color:var(--tx0) }
-    .btn-create { padding:9px 18px;background:linear-gradient(135deg,var(--sky),#0284c7);border:none;border-radius:var(--r2);color:#fff;font-family:var(--display);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;position:relative;overflow:hidden }
-    .btn-create::before { content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.15) 0%,transparent 55%) }
-    .btn-create:hover { transform:translateY(-1px);box-shadow:0 6px 20px rgba(14,165,233,.4) }
+    .mal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .65);
+      backdrop-filter: blur(6px);
+      z-index: 300;
+      align-items: center;
+      justify-content: center
+    }
+
+    .mal-backdrop.on {
+      display: flex
+    }
+
+    .mal-box {
+      background: var(--panel);
+      border: 1px solid var(--rim1);
+      border-radius: var(--r4);
+      padding: 28px 32px;
+      width: 440px;
+      max-width: 95vw;
+      box-shadow: var(--sh3);
+      animation: authIn .35s cubic-bezier(.16, 1, .3, 1) both
+    }
+
+    .mal-title {
+      font-family: var(--display);
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -.3px;
+      margin-bottom: 4px
+    }
+
+    .mal-sub {
+      font-size: 12px;
+      color: var(--tx1);
+      margin-bottom: 20px
+    }
+
+    .mal-foot {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      justify-content: flex-end
+    }
+
+    .btn-ghost {
+      padding: 9px 18px;
+      background: var(--depth);
+      border: 1px solid var(--rim1);
+      border-radius: var(--r2);
+      color: var(--tx1);
+      font-family: var(--display);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--rim2);
+      color: var(--tx0)
+    }
+
+    .btn-create {
+      padding: 9px 18px;
+      background: linear-gradient(135deg, var(--sky), #0284c7);
+      border: none;
+      border-radius: var(--r2);
+      color: #fff;
+      font-family: var(--display);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .2s;
+      position: relative;
+      overflow: hidden
+    }
+
+    .btn-create::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, .15) 0%, transparent 55%)
+    }
+
+    .btn-create:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(14, 165, 233, .4)
+    }
   </style>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -1864,7 +1964,8 @@
     <div class="mal-box">
       <div class="mal-title" id="malTitle">🔔 Create New Alert</div>
       <div class="mal-sub" id="malSub">Set a custom spend threshold to be alerted when costs exceed your limit.</div>
-      <div class="fg"><label class="fl">Alert Name</label><input class="fi" id="alertName" placeholder="e.g. EC2 Spend Spike" /></div>
+      <div class="fg"><label class="fl">Alert Name</label><input class="fi" id="alertName"
+          placeholder="e.g. EC2 Spend Spike" /></div>
       <div class="fg"><label class="fl">Service</label>
         <select class="fi" id="alertService" style="cursor:pointer">
           <option value="Total AWS Spend">Total AWS Spend</option>
@@ -1875,12 +1976,36 @@
           <option value="Amazon CloudFront">Amazon CloudFront</option>
         </select>
       </div>
-      <div class="fg"><label class="fl">Threshold (USD / month)</label><input class="fi" id="alertThreshold" type="number" placeholder="e.g. 500" min="1" /></div>
+      <div class="fg"><label class="fl">Threshold (USD / month)</label><input class="fi" id="alertThreshold"
+          type="number" placeholder="e.g. 500" min="1" /></div>
       <div class="af-alert" id="newAlertErr" style="margin-bottom:0"></div>
       <div class="mal-foot">
         <button class="btn-ghost" onclick="closeNewAlertModal()">Cancel</button>
         <button class="btn-create" onclick="createNewAlert()">Create Alert →</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ONBOARDING MODAL -->
+  <div id="onboarding"
+    style="display:none; position:fixed; inset:0; background:var(--void); z-index:9000; align-items:center; justify-content:center; flex-direction:column; padding:20px;">
+    <div
+      style="background:var(--panel); border:1px solid var(--rim1); padding:40px; border-radius:var(--r3); max-width:440px; width:100%; box-shadow:var(--sh3); text-align:center; animation:authIn .35s cubic-bezier(.16,1,.3,1) both;">
+      <div
+        style="margin: 0 auto 20px; width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:var(--sky-dim); color:var(--sky);">
+        <i data-lucide="cloud" style="width:24px;height:24px;"></i></div>
+      <h2
+        style="font-family:var(--display); font-size:22px; margin-bottom:8px; color:var(--tx0); letter-spacing:-0.5px;">
+        Connect AWS Account</h2>
+      <p style="color:var(--tx2); font-size:13px; margin-bottom:28px; line-height:1.5;">Welcome to CloudLens! To get
+        started, securely connect your AWS environment using ReadOnlyAccess IAM keys.</p>
+
+      <div class="fg" style="text-align:left;"><label class="fl">Access Key ID</label><input type="text"
+          id="obAccessKey" class="fi" placeholder="AKIA..."></div>
+      <div class="fg" style="text-align:left; margin-bottom:24px;"><label class="fl">Secret Access Key</label><input
+          type="password" id="obSecretKey" class="fi" placeholder="••••••••••••••••"></div>
+      <button class="btn-primary" id="obSaveBtn" style="width:100%;" onclick="saveOnboardingKeys()">Connect Account
+        →</button>
     </div>
   </div>
 
@@ -1893,20 +2018,28 @@
       </div>
       <div class="sb-body">
         <div class="sb-sec">Overview</div>
-        <div class="ni act" onclick="nav('dashboard',this)"><span class="ni-ico">◈</span>Dashboard</div>
-        <div class="ni" onclick="nav('analytics',this)"><span class="ni-ico">⟁</span>Analytics</div>
-        <div class="ni" onclick="nav('recommendations',this)"><span class="ni-ico">⚡</span>Recommendations<span
-            class="ni-badge bd-r" id="recsBadge">0</span></div>
+        <div class="ni act" onclick="nav('dashboard',this)"><span class="ni-ico"><i data-lucide="layout-dashboard"
+              style="width:14px;height:14px"></i></span>Dashboard</div>
+        <div class="ni" onclick="nav('analytics',this)"><span class="ni-ico"><i data-lucide="bar-chart-2"
+              style="width:14px;height:14px"></i></span>Analytics</div>
+        <div class="ni" onclick="nav('recommendations',this)"><span class="ni-ico"><i data-lucide="lightbulb"
+              style="width:14px;height:14px"></i></span>Recommendations<span class="ni-badge bd-r"
+            id="recsBadge">0</span></div>
         <div class="sb-sec">Infrastructure</div>
-        <div class="ni" onclick="nav('services',this)"><span class="ni-ico">◻</span>Services</div>
-        <div class="ni" onclick="nav('regions',this)"><span class="ni-ico">◎</span>Regions<span
-            class="ni-badge bd-g" id="regionsBadge">4</span></div>
-        <div class="ni" onclick="nav('budgets',this)"><span class="ni-ico">◌</span>Budgets<span
-            class="ni-badge bd-b" id="budgetsBadge" style="display:none">0</span></div>
+        <div class="ni" onclick="nav('services',this)"><span class="ni-ico"><i data-lucide="box"
+              style="width:14px;height:14px"></i></span>Services</div>
+        <div class="ni" onclick="nav('regions',this)"><span class="ni-ico"><i data-lucide="globe"
+              style="width:14px;height:14px"></i></span>Regions<span class="ni-badge bd-g" id="regionsBadge">4</span>
+        </div>
+        <div class="ni" onclick="nav('budgets',this)"><span class="ni-ico"><i data-lucide="wallet"
+              style="width:14px;height:14px"></i></span>Budgets<span class="ni-badge bd-b" id="budgetsBadge"
+            style="display:none">0</span></div>
         <div class="sb-sec">Monitoring</div>
-        <div class="ni" onclick="nav('alerts',this)"><span class="ni-ico">◬</span>Alerts<span
-            class="ni-badge bd-r" id="alertsBadge">3</span></div>
-        <div class="ni" onclick="nav('settings',this)"><span class="ni-ico">◍</span>Settings</div>
+        <div class="ni" onclick="nav('alerts',this)"><span class="ni-ico"><i data-lucide="bell"
+              style="width:14px;height:14px"></i></span>Alerts<span class="ni-badge bd-r" id="alertsBadge">3</span>
+        </div>
+        <div class="ni" onclick="nav('settings',this)"><span class="ni-ico"><i data-lucide="settings"
+              style="width:14px;height:14px"></i></span>Settings</div>
       </div>
       <div class="sb-foot">
         <div class="user-card">
@@ -1922,7 +2055,8 @@
     <div class="main">
       <div class="tb">
         <div class="tb-left">
-          <button class="ham" onclick="toggleSidebar()">☰</button>
+          <button class="ham" onclick="toggleSidebar()"><i data-lucide="panel-left"
+              style="width:18px;height:18px"></i></button>
           <div class="env-selector">
             <div class="env-ico">☁️</div>
             <div class="env-info">
@@ -1937,6 +2071,8 @@
           <div class="live-chip">
             <div class="live-dot"></div>LIVE
           </div>
+          <button class="tb-btn" onclick="toggleTheme()" id="themeBtn"><i data-lucide="sun"
+              style="width:16px;height:16px"></i></button>
           <button class="tb-btn" id="exportBtn" onclick="exportCSV()">⬇ Export</button>
           <button class="tb-btn" id="refreshBtn" onclick="loadDashboard()">⟳ Refresh</button>
           <button class="tb-btn hi" id="newAlertBtn" onclick="openNewAlertModal()">+ New Alert</button>
@@ -1949,14 +2085,15 @@
         <div class="page on" id="page-dashboard">
           <div class="notif-bar" id="notifMain">
             <span style="font-size:14px">💡</span>
-            <span>CloudLens identified <span class="notif-hl"><span id="notifSavings">$4,820</span> in potential savings</span> — <span id="notifRecCount">12</span> recommendations
+            <span>CloudLens identified <span class="notif-hl"><span id="notifSavings">$4,820</span> in potential
+                savings</span> — <span id="notifRecCount">12</span> recommendations
               pending review.</span>
             <span class="notif-x" onclick="this.parentElement.style.display='none'">✕</span>
           </div>
           <div class="kpi-grid">
             <div class="kpi" style="--kg:var(--red);--kglow:rgba(248,113,113,.06);--kibg:var(--red-dim)">
               <div class="kpi-row">
-                <div class="kpi-icon">💸</div>
+                <div class="kpi-icon"><i data-lucide="dollar-sign" style="width:18px;height:18px"></i></div>
                 <div class="kpi-badge bup">↑ 8.2%</div>
               </div>
               <div class="kpi-val" id="spend">$0</div>
@@ -1967,7 +2104,7 @@
             </div>
             <div class="kpi" style="--kg:var(--teal);--kglow:rgba(45,212,191,.06);--kibg:var(--teal-dim)">
               <div class="kpi-row">
-                <div class="kpi-icon">✦</div>
+                <div class="kpi-icon"><i data-lucide="piggy-bank" style="width:18px;height:18px"></i></div>
                 <div class="kpi-badge bdn">↓ 12.4%</div>
               </div>
               <div class="kpi-val" id="savings">$0</div>
@@ -1978,7 +2115,7 @@
             </div>
             <div class="kpi" style="--kg:var(--sky);--kglow:rgba(96,184,245,.07);--kibg:var(--sky-dim)">
               <div class="kpi-row">
-                <div class="kpi-icon">◈</div>
+                <div class="kpi-icon"><i data-lucide="server" style="width:18px;height:18px"></i></div>
                 <div class="kpi-badge bnt">↑ 3</div>
               </div>
               <div class="kpi-val" id="resources">0</div>
@@ -2007,8 +2144,22 @@
             </div>
             <div style="overflow-x:auto">
               <table class="dtbl">
-                <thead><tr><th>Instance Name</th><th>Instance ID</th><th>Type</th><th>Status</th><th>Launch Time</th></tr></thead>
-                <tbody id="ec2InstanceTable"><tr><td colspan="5" style="text-align:center;color:var(--tx2);padding:20px;font-family:var(--mono);font-size:11px">⏳ &nbsp; Loading EC2 instances...</td></tr></tbody>
+                <thead>
+                  <tr>
+                    <th>Instance Name</th>
+                    <th>Instance ID</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Launch Time</th>
+                  </tr>
+                </thead>
+                <tbody id="ec2InstanceTable">
+                  <tr>
+                    <td colspan="5"
+                      style="text-align:center;color:var(--tx2);padding:20px;font-family:var(--mono);font-size:11px">⏳
+                      &nbsp; Loading EC2 instances...</td>
+                  </tr>
+                </tbody>
               </table>
             </div>
           </div>
@@ -2222,7 +2373,8 @@
 
         <!-- RECOMMENDATIONS -->
         <div class="page" id="page-recommendations">
-          <div class="alert a-info">💡 &nbsp; Recommendations below are generated from your real AWS resource utilization data.</div>
+          <div class="alert a-info">💡 &nbsp; Recommendations below are generated from your real AWS resource
+            utilization data.</div>
           <div class="tpanel">
             <div class="tp-head">
               <div class="tp-title">All Optimization Findings</div>
@@ -2252,17 +2404,20 @@
 
         <!-- SERVICES -->
         <div class="page" id="page-services">
-          <div class="sec-bar" style="margin-bottom:14px"><span class="sec-ttl">AWS Services</span><span
-              class="sec-cnt" id="servicesCount">9 active</span></div>
+          <div class="sec-bar" style="margin-bottom:14px"><span class="sec-ttl">AWS Services</span><span class="sec-cnt"
+              id="servicesCount">9 active</span></div>
           <div class="svc-grid" id="svcGrid"></div>
         </div>
 
         <!-- REGIONS -->
         <div class="page" id="page-regions">
-          <div class="alert a-info">🌐 &nbsp; Multi-region breakdown — cost distribution across your active AWS regions.</div>
+          <div class="alert a-info">🌐 &nbsp; Multi-region breakdown — cost distribution across your active AWS regions.
+          </div>
           <div class="kpi-grid" id="regionsGrid">
             <!-- Real region data injected by renderRegions() -->
-            <div style="grid-column:1/-1;text-align:center;color:var(--tx2);padding:28px;font-family:var(--mono);font-size:11px;letter-spacing:1px">⏳ &nbsp; Fetching region costs from AWS...</div>
+            <div
+              style="grid-column:1/-1;text-align:center;color:var(--tx2);padding:28px;font-family:var(--mono);font-size:11px;letter-spacing:1px">
+              ⏳ &nbsp; Fetching region costs from AWS...</div>
           </div>
         </div>
 
@@ -2271,7 +2426,8 @@
           <div class="alert a-info">📊 &nbsp; Budget tracking based on your current AWS Cost Explorer spend data.</div>
           <div class="tpanel">
             <div class="tp-head">
-              <div class="tp-title">Budget Tracking</div><button class="tb-btn" style="font-size:11px" onclick="openNewBudgetModal()">+ New
+              <div class="tp-title">Budget Tracking</div><button class="tb-btn" style="font-size:11px"
+                onclick="openNewBudgetModal()">+ New
                 Budget</button>
             </div>
             <div style="overflow-x:auto">
@@ -2289,7 +2445,11 @@
                 </thead>
                 <tbody id="budgetBody">
                   <!-- Real budget rows injected by renderBudgets() + loadCustomBudgets() -->
-                  <tr><td colspan="7" style="text-align:center;color:var(--tx2);padding:28px;font-family:var(--mono);font-size:11px;letter-spacing:1px">⏳ &nbsp; Fetching budget data from AWS...</td></tr>
+                  <tr>
+                    <td colspan="7"
+                      style="text-align:center;color:var(--tx2);padding:28px;font-family:var(--mono);font-size:11px;letter-spacing:1px">
+                      ⏳ &nbsp; Fetching budget data from AWS...</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -2298,7 +2458,8 @@
 
         <!-- ALERTS -->
         <div class="page" id="page-alerts">
-          <div class="alert a-info">🔔 &nbsp; Alerts are generated from your real-time AWS resource monitoring data.</div>
+          <div class="alert a-info">🔔 &nbsp; Alerts are generated from your real-time AWS resource monitoring data.
+          </div>
           <div id="alertsList" style="display:flex;flex-direction:column;gap:8px">
             <!-- Real alerts injected by renderAlerts() + loadCustomAlerts() -->
           </div>
@@ -2314,8 +2475,8 @@
               </div>
               <div class="fg"><label class="fl">Email Address</label><input class="fi" type="email" id="stEmail"
                   value="" readonly style="opacity:.5;cursor:not-allowed" /></div>
-              <div class="fg"><label class="fl">AWS Account ID</label><input class="fi" id="stAwsAccountId" value="Not connected" readonly
-                  style="opacity:.4;cursor:not-allowed" /></div>
+              <div class="fg"><label class="fl">AWS Account ID</label><input class="fi" id="stAwsAccountId"
+                  value="Not connected" readonly style="opacity:.4;cursor:not-allowed" /></div>
               <div class="fg"><label class="fl">Default Region</label>
                 <select class="fi" id="stRegionSel" style="cursor:pointer">
                   <option value="us-east-1">us-east-1 (N. Virginia)</option>
@@ -2347,22 +2508,28 @@
               <div class="af-alert" id="awsConnectAlert" style="margin-bottom:14px"></div>
               <!-- Connected -->
               <div id="awsConnectedInfo" style="display:none">
-                <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--teal-dim);border:1px solid rgba(45,212,191,.2);border-radius:var(--r2);margin-bottom:16px">
+                <div
+                  style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--teal-dim);border:1px solid rgba(45,212,191,.2);border-radius:var(--r2);margin-bottom:16px">
                   <span style="font-size:20px">✅</span>
                   <div>
                     <div style="font-size:13px;font-weight:600;color:#5eead4">AWS Account Connected</div>
-                    <div id="awsConnectedRegion" style="font-size:11px;color:var(--tx1);font-family:var(--mono);margin-top:2px">Region: —</div>
+                    <div id="awsConnectedRegion"
+                      style="font-size:11px;color:var(--tx1);font-family:var(--mono);margin-top:2px">Region: —</div>
                   </div>
                 </div>
-                <button class="btn-primary" id="disconnectBtn" onclick="disconnectAws()" style="max-width:200px;background:linear-gradient(135deg,#f87171,#b91c1c)">
+                <button class="btn-primary" id="disconnectBtn" onclick="disconnectAws()"
+                  style="max-width:200px;background:linear-gradient(135deg,#f87171,#b91c1c)">
                   <span class="bt">🔌 Disconnect AWS</span>
                   <div class="bs"></div>
                 </button>
               </div>
               <!-- Not connected -->
               <div id="awsConnectForm">
-                <div class="fg"><label class="fl">Access Key ID</label><input class="fi" id="awsKeyId" placeholder="AKIAIOSFODNN7EXAMPLE" autocomplete="off" /></div>
-                <div class="fg"><label class="fl">Secret Access Key</label><input class="fi" type="password" id="awsSecretKey" placeholder="••••••••••••••••••••••••••••••••" autocomplete="new-password" /></div>
+                <div class="fg"><label class="fl">Access Key ID</label><input class="fi" id="awsKeyId"
+                    placeholder="AKIAIOSFODNN7EXAMPLE" autocomplete="off" /></div>
+                <div class="fg"><label class="fl">Secret Access Key</label><input class="fi" type="password"
+                    id="awsSecretKey" placeholder="••••••••••••••••••••••••••••••••" autocomplete="new-password" />
+                </div>
                 <div class="fg"><label class="fl">Primary Region</label>
                   <select class="fi" id="awsRegionSel" style="cursor:pointer">
                     <option value="us-east-1">us-east-1 — N. Virginia</option>
@@ -2376,7 +2543,8 @@
                     <option value="ap-northeast-1">ap-northeast-1 — Tokyo</option>
                   </select>
                 </div>
-                <button class="btn-primary" id="awsConnectBtn" onclick="connectAws()" style="max-width:220px;margin-top:4px">
+                <button class="btn-primary" id="awsConnectBtn" onclick="connectAws()"
+                  style="max-width:220px;margin-top:4px">
                   <span class="bt">🔗 Connect AWS Account</span>
                   <div class="bs"></div>
                 </button>
@@ -2394,43 +2562,43 @@
     let awsData = null;
     // Auto-detect: if opened via file:// or a port other than 5000, point to the backend server.
     const BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:5000'
-  : ''; // On Render, frontend and backend are same origin
+      ? 'http://localhost:5000'
+      : ''; // On Render, frontend and backend are same origin
     const recs = []; // populated from real AWS data only
     const svcs = []; // populated from real AWS costByService only
     // ── AWS service meta map ──────────────────────────────────────────────────
     const SVC_META = {
-      'Amazon Elastic Compute Cloud':       { ico: '🖥', cat: 'Compute',     color: 'var(--sky)',   short: 'EC2'        },
-      'Amazon Simple Storage Service':      { ico: '🪣', cat: 'Storage',     color: 'var(--teal)',  short: 'S3'         },
-      'Amazon Relational Database Service': { ico: '🗄', cat: 'Database',    color: '#fcd34d',      short: 'RDS'        },
-      'AWS Lambda':                         { ico: '⚡', cat: 'Serverless',  color: '#c084fc',      short: 'Lambda'     },
-      'Amazon CloudFront':                  { ico: '🌐', cat: 'CDN',         color: '#f472b6',      short: 'CloudFront' },
-      'Amazon API Gateway':                 { ico: '🔌', cat: 'Integration', color: 'var(--sky)',   short: 'API GW'     },
-      'Amazon DynamoDB':                    { ico: '💾', cat: 'Database',    color: '#f472b6',      short: 'DynamoDB'   },
-      'Amazon CloudWatch':                  { ico: '📊', cat: 'Monitoring',  color: '#fcd34d',      short: 'CloudWatch' },
-      'AWS CloudTrail':                     { ico: '🔍', cat: 'Logging',     color: '#fcd34d',      short: 'CloudTrail' },
-      'Amazon VPC':                         { ico: '🔗', cat: 'Networking',  color: '#c084fc',      short: 'VPC'        },
-      'Amazon Elastic Container Service':   { ico: '📦', cat: 'Containers',  color: 'var(--teal)',  short: 'ECS'        },
-      'AWS Fargate':                        { ico: '📦', cat: 'Containers',  color: 'var(--teal)',  short: 'Fargate'    },
-      'Amazon Route 53':                    { ico: '🗺', cat: 'DNS',         color: '#f472b6',      short: 'Route 53'   },
-      'AWS Support':                        { ico: '🎧', cat: 'Support',     color: 'var(--sky)',   short: 'Support'    },
-      'AWS Cost Explorer':                  { ico: '💰', cat: 'Management',  color: 'var(--teal)',  short: 'Cost Expl.' },
-      'Amazon Elastic Block Store':         { ico: '💽', cat: 'Storage',     color: 'var(--sky)',   short: 'EBS'        },
-      'AWS Key Management Service':         { ico: '🔑', cat: 'Security',    color: '#f472b6',      short: 'KMS'        },
+      'Amazon Elastic Compute Cloud': { ico: '🖥', cat: 'Compute', color: 'var(--sky)', short: 'EC2' },
+      'Amazon Simple Storage Service': { ico: '🪣', cat: 'Storage', color: 'var(--teal)', short: 'S3' },
+      'Amazon Relational Database Service': { ico: '🗄', cat: 'Database', color: '#fcd34d', short: 'RDS' },
+      'AWS Lambda': { ico: '⚡', cat: 'Serverless', color: '#c084fc', short: 'Lambda' },
+      'Amazon CloudFront': { ico: '🌐', cat: 'CDN', color: '#f472b6', short: 'CloudFront' },
+      'Amazon API Gateway': { ico: '🔌', cat: 'Integration', color: 'var(--sky)', short: 'API GW' },
+      'Amazon DynamoDB': { ico: '💾', cat: 'Database', color: '#f472b6', short: 'DynamoDB' },
+      'Amazon CloudWatch': { ico: '📊', cat: 'Monitoring', color: '#fcd34d', short: 'CloudWatch' },
+      'AWS CloudTrail': { ico: '🔍', cat: 'Logging', color: '#fcd34d', short: 'CloudTrail' },
+      'Amazon VPC': { ico: '🔗', cat: 'Networking', color: '#c084fc', short: 'VPC' },
+      'Amazon Elastic Container Service': { ico: '📦', cat: 'Containers', color: 'var(--teal)', short: 'ECS' },
+      'AWS Fargate': { ico: '📦', cat: 'Containers', color: 'var(--teal)', short: 'Fargate' },
+      'Amazon Route 53': { ico: '🗺', cat: 'DNS', color: '#f472b6', short: 'Route 53' },
+      'AWS Support': { ico: '🎧', cat: 'Support', color: 'var(--sky)', short: 'Support' },
+      'AWS Cost Explorer': { ico: '💰', cat: 'Management', color: 'var(--teal)', short: 'Cost Expl.' },
+      'Amazon Elastic Block Store': { ico: '💽', cat: 'Storage', color: 'var(--sky)', short: 'EBS' },
+      'AWS Key Management Service': { ico: '🔑', cat: 'Security', color: '#f472b6', short: 'KMS' },
     };
     const DONUT_COLORS = ['var(--sky)', 'var(--teal)', '#fcd34d', '#c084fc', '#f87171'];
     const REGION_META = {
-      'us-east-1':      { flag: '🇺🇸', label: 'N. Virginia'   },
-      'us-east-2':      { flag: '🇺🇸', label: 'Ohio'          },
-      'us-west-1':      { flag: '🇺🇸', label: 'N. California'  },
-      'us-west-2':      { flag: '🇺🇸', label: 'Oregon'        },
-      'eu-west-1':      { flag: '🇪🇺', label: 'Ireland'       },
-      'eu-west-2':      { flag: '🇪🇺', label: 'London'        },
-      'eu-central-1':   { flag: '🇩🇪', label: 'Frankfurt'     },
-      'ap-southeast-1': { flag: '🇸🇬', label: 'Singapore'     },
-      'ap-southeast-2': { flag: '🇦🇺', label: 'Sydney'        },
-      'ap-northeast-1': { flag: '🇯🇵', label: 'Tokyo'         },
-      'ap-south-1':     { flag: '🇮🇳', label: 'Mumbai'        },
+      'us-east-1': { flag: '🇺🇸', label: 'N. Virginia' },
+      'us-east-2': { flag: '🇺🇸', label: 'Ohio' },
+      'us-west-1': { flag: '🇺🇸', label: 'N. California' },
+      'us-west-2': { flag: '🇺🇸', label: 'Oregon' },
+      'eu-west-1': { flag: '🇪🇺', label: 'Ireland' },
+      'eu-west-2': { flag: '🇪🇺', label: 'London' },
+      'eu-central-1': { flag: '🇩🇪', label: 'Frankfurt' },
+      'ap-southeast-1': { flag: '🇸🇬', label: 'Singapore' },
+      'ap-southeast-2': { flag: '🇦🇺', label: 'Sydney' },
+      'ap-northeast-1': { flag: '🇯🇵', label: 'Tokyo' },
+      'ap-south-1': { flag: '🇮🇳', label: 'Mumbai' },
     };
     // ─────────────────────────────────────────────────────────────────────────
     function showAlert(msg, type = 'err-a') { const el = document.getElementById('authAlert'); el.className = 'af-alert show ' + type; el.innerHTML = (type === 'err-a' ? '⚠️' : '✅') + ' &nbsp; ' + msg; }
@@ -2465,7 +2633,6 @@
           localStorage.setItem("user", JSON.stringify(u));
           user = u;
           launchApp();
-          loadDashboard();
         } else {
           showAlert(data.message || "Authentication failed", "err-a");
         }
@@ -2479,7 +2646,14 @@
       document.getElementById('auth').style.display = 'none';
       setTimeout(() => {
         document.getElementById('loader').classList.add('out');
-        document.getElementById('app').classList.add('on');
+        if (!user.awsConnected) {
+          document.getElementById('onboarding').style.display = 'flex';
+          if (window.lucide) lucide.createIcons();
+        } else {
+          document.getElementById('app').classList.add('on');
+          loadDashboard();
+        }
+
         const avEl = document.getElementById('sbAv');
         if (user.picture) {
           avEl.style.cssText = 'background-image:url("' + user.picture + '");background-size:cover;background-position:center;font-size:0;border-radius:8px;';
@@ -2521,16 +2695,28 @@
       document.getElementById('tbPage').textContent = id;
       closeSidebar(); setTimeout(animateFills, 40);
     }
-    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('on'); }
-    function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('on'); }
+    function toggleSidebar() {
+      if (window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('overlay').classList.toggle('on');
+      } else {
+        document.body.classList.toggle('sb-collapsed');
+      }
+    }
+    function closeSidebar() {
+      if (window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('overlay').classList.remove('on');
+      }
+    }
     function sevCls(s) { return s === 'h' ? 'sv-h' : s === 'm' ? 'sv-m' : 'sv-l' }
     function sevLbl(s) { return s === 'h' ? '● High' : s === 'm' ? '◑ Medium' : '○ Low' }
     function utilClr(u) { return u < 20 ? 'var(--red)' : u < 50 ? 'var(--gold)' : 'var(--teal)' }
     function recRow(r) { return `<tr><td><div class="rid">${r.id}</div><div class="rtype">${r.type}</div></td><td style="max-width:200px;font-size:11px;color:var(--tx1);line-height:1.45">${r.finding}</td><td><span class="sev-tag ${sevCls(r.sev)}">${sevLbl(r.sev)}</span></td><td><span class="sav-val">${r.sav}</span><span class="sav-unit">/mo</span></td><td><div style="display:flex;align-items:center;gap:7px"><div class="util-bar"><div class="util-fill" style="width:${r.util}%;background:${utilClr(r.util)}"></div></div><span style="font-family:var(--mono);font-size:9px;color:var(--tx2)">${r.util}%</span></div></td><td><button class="act-btn" onclick="applyRec(this)">Apply →</button></td></tr>` }
     function buildRecsFromData(data) {
       const built = [];
-      if (data.ec2?.stopped > 0)    built.push({ id: 'ec2-stopped',    type: `EC2 · ${data.ec2.stopped} instance(s)`,  finding: `${data.ec2.stopped} stopped instance(s) — terminate to avoid ongoing charges`, sev: 'h', sav: '$' + (data.ec2.stopped * 15),    util: 0 });
-      if (data.ebs?.unattached > 0) built.push({ id: 'ebs-unattached', type: `EBS · ${data.ebs.unattached} volume(s)`, finding: `${data.ebs.unattached} unattached EBS volume(s) — delete if no longer needed`,     sev: 'h', sav: '$' + (data.ebs.unattached * 24), util: 0 });
+      if (data.ec2?.stopped > 0) built.push({ id: 'ec2-stopped', type: `EC2 · ${data.ec2.stopped} instance(s)`, finding: `${data.ec2.stopped} stopped instance(s) — terminate to avoid ongoing charges`, sev: 'h', sav: '$' + (data.ec2.stopped * 15), util: 0 });
+      if (data.ebs?.unattached > 0) built.push({ id: 'ebs-unattached', type: `EBS · ${data.ebs.unattached} volume(s)`, finding: `${data.ebs.unattached} unattached EBS volume(s) — delete if no longer needed`, sev: 'h', sav: '$' + (data.ebs.unattached * 24), util: 0 });
       return built;
     }
     let _allRecs = []; let _recPage = 0; const _recPerPage = 5;
@@ -2559,6 +2745,44 @@
       const label = document.getElementById('recCountLabel');
       if (label) label.textContent = total ? total + ' findings' : '—';
     }
+    async function saveOnboardingKeys() {
+      const ak = document.getElementById('obAccessKey').value;
+      const sk = document.getElementById('obSecretKey').value;
+      if (!ak || !sk) return showToast('Please enter both keys');
+
+      const btn = document.getElementById('obSaveBtn');
+      btn.textContent = 'Connecting...'; btn.disabled = true;
+      try {
+        const res = await fetch(BASE_URL + '/api/aws/connect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+          body: JSON.stringify({ accessKeyId: ak, secretAccessKey: sk, region: 'us-east-1' })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          user.awsConnected = true;
+          user.awsRegion = 'us-east-1';
+          if (data.awsAccountId) {
+            user.awsAccountId = data.awsAccountId;
+            const accEl = document.getElementById('stAwsAccountId');
+            if (accEl) accEl.value = data.awsAccountId;
+          }
+          localStorage.setItem('user', JSON.stringify(user));
+          document.getElementById('onboarding').style.display = 'none';
+          document.getElementById('app').classList.add('on');
+          showToast('AWS Connected Successfully!');
+          renderAwsStatus(true, 'us-east-1');
+          loadDashboard();
+        } else {
+          const data = await res.json();
+          showToast(data.message || 'Failed to connect AWS account');
+        }
+      } catch (e) {
+        showToast('Error connecting to server');
+      }
+      btn.textContent = 'Connect Account →'; btn.disabled = false;
+    }
+
     function _recPageChange(dir) {
       const totalPages = Math.max(1, Math.ceil(_allRecs.length / _recPerPage));
       _recPage = Math.max(0, Math.min(_recPage + dir, totalPages - 1));
@@ -2595,15 +2819,15 @@
     }
     // ── Donut chart ───────────────────────────────────────────────────────────
     function updateDonut(costByService, totalCost) {
-      const svgEl    = document.getElementById('donutSvg');
-      const totalEl  = document.getElementById('donutTotal');
+      const svgEl = document.getElementById('donutSvg');
+      const totalEl = document.getElementById('donutTotal');
       const legendEl = document.getElementById('donutLegend');
       if (!svgEl || !costByService?.length) return;
       const totalNum = parseFloat(totalCost) || 0;
-      const circ     = 99.9;
+      const circ = 99.9;
       const topItems = costByService.slice(0, 5);
       const segments = topItems.map((item, i) => ({ name: svcMeta(item.name).short, cost: parseFloat(item.cost), color: DONUT_COLORS[i] }));
-      const topCost  = segments.reduce((s, i) => s + i.cost, 0);
+      const topCost = segments.reduce((s, i) => s + i.cost, 0);
       if (totalNum - topCost > 0.5) segments.push({ name: 'Other', cost: totalNum - topCost, color: '#f87171' });
       const circles = svgEl.querySelectorAll('circle:not(:first-child)');
       let offset = 0;
@@ -2625,8 +2849,8 @@
       const el = document.getElementById('alertsList');
       if (!el || !data) return;
       const alerts = [];
-      if (data.ec2?.stopped > 0)    alerts.push({ icon: '🔴', color: 'var(--red)',  bdr: 'rgba(248,113,113,.14)', title: `${data.ec2.stopped} Stopped EC2 Instance(s)`,         body: `${data.ec2.stopped} instance(s) stopped — still incurring EBS charges. Terminate if unused.`,                                       time: 'Now'          });
-      if (data.ebs?.unattached > 0) alerts.push({ icon: '🟡', color: 'var(--gold)', bdr: 'rgba(252,211,77,.12)',  title: `Unattached EBS Volumes (${data.ebs.unattached})`,          body: `${data.ebs.unattached} volume(s) unattached — est. $${(data.ebs.unattached * 24).toFixed(0)}/month wasted spend`,                    time: '1 hr ago'     });
+      if (data.ec2?.stopped > 0) alerts.push({ icon: '🔴', color: 'var(--red)', bdr: 'rgba(248,113,113,.14)', title: `${data.ec2.stopped} Stopped EC2 Instance(s)`, body: `${data.ec2.stopped} instance(s) stopped — still incurring EBS charges. Terminate if unused.`, time: 'Now' });
+      if (data.ebs?.unattached > 0) alerts.push({ icon: '🟡', color: 'var(--gold)', bdr: 'rgba(252,211,77,.12)', title: `Unattached EBS Volumes (${data.ebs.unattached})`, body: `${data.ebs.unattached} volume(s) unattached — est. $${(data.ebs.unattached * 24).toFixed(0)}/month wasted spend`, time: '1 hr ago' });
       if (parseFloat(data.savings) > 0) alerts.push({ icon: '🟢', color: 'var(--teal)', bdr: 'rgba(45,212,191,.14)', title: `$${data.savings} in Potential Savings Identified`, body: `${data.openRecommendations} optimization opportunities — right-sizing, idle cleanup and more.`, time: 'This session' });
       if (!alerts.length) alerts.push({ icon: '🟢', color: 'var(--teal)', bdr: 'rgba(45,212,191,.14)', title: 'All Systems Healthy', body: 'No critical issues detected. CloudLens monitors your infrastructure continuously.', time: 'Now' });
       el.innerHTML = alerts.map(a =>
@@ -2641,7 +2865,7 @@
       if (!el || !data?.costByRegion?.length) return;
       const colors = ['var(--sky)', 'var(--teal)', 'var(--gold)', 'var(--violet)'];
       el.innerHTML = data.costByRegion.map((r, i) => {
-        const meta  = REGION_META[r.name] || { flag: '🌍', label: r.name };
+        const meta = REGION_META[r.name] || { flag: '🌍', label: r.name };
         const color = colors[i] || 'var(--sky)';
         return `<div class="kpi" style="--kg:${color};--kglow:rgba(96,184,245,.07);--kibg:var(--sky-dim)">` +
           `<div class="kpi-row"><div class="kpi-icon">${meta.flag}</div><div class="kpi-badge bnt">${r.pct}%</div></div>` +
@@ -2659,7 +2883,7 @@
       const b7 = document.getElementById('last7DaysBar');
       const bf = document.getElementById('forecastBar');
       const sc = document.getElementById('servicesCount');
-      if (k7 && data.last7DaysCost)  k7.textContent = '$' + fmt0(data.last7DaysCost);
+      if (k7 && data.last7DaysCost) k7.textContent = '$' + fmt0(data.last7DaysCost);
       if (kf && parseFloat(data.forecastedCost) > 0) kf.textContent = '$' + fmt0(parseFloat(data.totalCost) + parseFloat(data.forecastedCost));
       if (ks && data.savings) ks.textContent = '$' + fmt0(parseFloat(data.savings));
       if (sc) sc.textContent = (data.costByService?.length || 0) + ' active';
@@ -2671,44 +2895,44 @@
     function renderTrendChart(monthlyCosts) {
       const svg = document.getElementById('trendSvg');
       if (!svg || !monthlyCosts?.length) return;
-      const data  = monthlyCosts.slice(-10);
+      const data = monthlyCosts.slice(-10);
       const costs = data.map(m => parseFloat(m.cost));
-      const maxC  = Math.max(...costs, 1);
-      const step  = Math.ceil(maxC / 5 / 1000) * 1000 || 1000;
-      const maxL  = step * 5;
+      const maxC = Math.max(...costs, 1);
+      const step = Math.ceil(maxC / 5 / 1000) * 1000 || 1000;
+      const maxL = step * 5;
       const xS = 66, xE = 435, yT = 44, yB = 158;
-      const dx   = data.length > 1 ? (xE - xS) / (data.length - 1) : 0;
-      const toY  = c => +(yB - (c / maxL) * (yB - yT)).toFixed(0);
-      const toX  = i => +(xS + i * dx).toFixed(0);
-      const pts  = data.map((_, i) => `${toX(i)},${toY(costs[i])}`).join(' ');
-      const MN   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      const mn   = d => { try { return MN[new Date(d.month + '-01').getMonth()]; } catch(e) { return ''; } };
-      const fmt  = v => v >= 1000 ? (v/1000).toFixed(0) + 'k' : v;
+      const dx = data.length > 1 ? (xE - xS) / (data.length - 1) : 0;
+      const toY = c => +(yB - (c / maxL) * (yB - yT)).toFixed(0);
+      const toX = i => +(xS + i * dx).toFixed(0);
+      const pts = data.map((_, i) => `${toX(i)},${toY(costs[i])}`).join(' ');
+      const MN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const mn = d => { try { return MN[new Date(d.month + '-01').getMonth()]; } catch (e) { return ''; } };
+      const fmt = v => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v;
       const gridY = [44, 74, 104, 134, 158];
       svg.innerHTML =
         `<defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--sky)" stop-opacity=".22"/><stop offset="100%" stop-color="var(--sky)" stop-opacity="0"/></linearGradient></defs>` +
         `<line x1="44" y1="16" x2="44" y2="158" class="cg"/>` +
         gridY.map(y => `<line x1="44" y1="${y}" x2="548" y2="${y}" class="cg"/>`).join('') +
-        [5,4,3,2,1].map((m,i) => `<text x="38" y="${gridY[i]+3}" class="axl" text-anchor="end">${fmt(step*m)}</text>`).join('') +
-        data.map((d,i) => `<text x="${toX(i)}" y="176" class="axl" text-anchor="middle">${mn(d)}</text>`).join('') +
-        `<polygon class="area-fill" points="${pts} ${toX(data.length-1)},158 ${toX(0)},158"/>` +
+        [5, 4, 3, 2, 1].map((m, i) => `<text x="38" y="${gridY[i] + 3}" class="axl" text-anchor="end">${fmt(step * m)}</text>`).join('') +
+        data.map((d, i) => `<text x="${toX(i)}" y="176" class="axl" text-anchor="middle">${mn(d)}</text>`).join('') +
+        `<polygon class="area-fill" points="${pts} ${toX(data.length - 1)},158 ${toX(0)},158"/>` +
         `<polyline points="${pts}" style="fill:none;stroke:var(--sky);stroke-width:4;opacity:.18;stroke-linecap:round;stroke-linejoin:round"/>` +
         `<polyline class="ln-main" points="${pts}"/>` +
-        data.map((d,i) => `<circle cx="${toX(i)}" cy="${toY(costs[i])}" r="3.5" class="dot-a"/>`).join('');
+        data.map((d, i) => `<circle cx="${toX(i)}" cy="${toY(costs[i])}" r="3.5" class="dot-a"/>`).join('');
     }
     // ── Budgets from real costByService ─────────────────────────────────────────────
     function renderBudgets(data) {
       const tbody = document.getElementById('budgetBody');
       if (!tbody || !data?.costByService?.length) return;
       tbody.innerHTML = data.costByService.slice(0, 4).map(s => {
-        const used  = parseFloat(s.cost);
+        const used = parseFloat(s.cost);
         const limit = Math.max(Math.ceil(used * 1.35 / 100) * 100, 1);
-        const rem   = Math.max(0, limit - used);
-        const pct   = Math.min(Math.round(used / limit * 100), 100);
-        const clr   = pct > 85 ? 'var(--red)' : pct > 60 ? 'var(--gold)' : 'var(--teal)';
-        const tag   = pct > 85 ? '<span class="sev-tag sv-h">● Critical</span>'
-                    : pct > 60 ? '<span class="sev-tag sv-m">◑ Warning</span>'
-                    : '<span class="sev-tag sv-l">○ Healthy</span>';
+        const rem = Math.max(0, limit - used);
+        const pct = Math.min(Math.round(used / limit * 100), 100);
+        const clr = pct > 85 ? 'var(--red)' : pct > 60 ? 'var(--gold)' : 'var(--teal)';
+        const tag = pct > 85 ? '<span class="sev-tag sv-h">● Critical</span>'
+          : pct > 60 ? '<span class="sev-tag sv-m">◑ Warning</span>'
+            : '<span class="sev-tag sv-l">○ Healthy</span>';
         const m = svcMeta(s.name);
         return `<tr><td><div class="rid">${m.short}-Budget</div></td>` +
           `<td style="color:var(--tx1);font-family:var(--mono);font-size:11px">$${limit.toLocaleString()}</td>` +
@@ -2722,7 +2946,7 @@
     function exportCSV() {
       if (!awsData?.costByService?.length) { alert('Data still loading — try again in a moment.'); return; }
       const rows = awsData.costByService.map(r => `"${r.name}",$${parseFloat(r.cost).toFixed(2)}`);
-      const csv  = 'Service,Cost (This Month USD)\n' + rows.join('\n');
+      const csv = 'Service,Cost (This Month USD)\n' + rows.join('\n');
       const a = Object.assign(document.createElement('a'), {
         href: URL.createObjectURL(new Blob([csv], { type: 'text/csv' })),
         download: `cloudlens-${new Date().toISOString().split('T')[0]}.csv`
@@ -2760,8 +2984,8 @@
     }
     async function saveSettings() {
       const btn = document.getElementById('saveBtn'); btn.classList.add('loading'); btn.disabled = true;
-      const name             = document.getElementById('stName').value.trim();
-      const preferredRegion  = document.getElementById('stRegionSel')?.value || null;
+      const name = document.getElementById('stName').value.trim();
+      const preferredRegion = document.getElementById('stRegionSel')?.value || null;
       const anomalyThreshold = document.getElementById('stAnomalyThreshold')?.value || null;
       try {
         const res = await fetch(BASE_URL + '/api/auth/profile', {
@@ -2779,12 +3003,12 @@
             document.getElementById('sbAv').textContent = ini;
             document.getElementById('sbName').textContent = name;
           }
-          if (preferredRegion)  user.preferredRegion  = preferredRegion;
+          if (preferredRegion) user.preferredRegion = preferredRegion;
           if (anomalyThreshold) user.anomalyThreshold = anomalyThreshold;
           // Persist to localStorage
           const st = JSON.parse(localStorage.getItem('user') || '{}');
-          if (name)             st.name             = name;
-          if (preferredRegion)  st.preferredRegion  = preferredRegion;
+          if (name) st.name = name;
+          if (preferredRegion) st.preferredRegion = preferredRegion;
           if (anomalyThreshold) st.anomalyThreshold = anomalyThreshold;
           localStorage.setItem('user', JSON.stringify(st));
           al.className = 'alert a-ok'; al.style.marginBottom = '16px'; al.innerHTML = '✅ &nbsp; Settings saved successfully.';
@@ -2804,7 +3028,7 @@
     function renderAwsStatus(connected, region) {
       const form = document.getElementById('awsConnectForm');
       const info = document.getElementById('awsConnectedInfo');
-      const rgn  = document.getElementById('awsConnectedRegion');
+      const rgn = document.getElementById('awsConnectedRegion');
       if (!form || !info) return;
       if (connected) {
         form.style.display = 'none';
@@ -2827,11 +3051,11 @@
       document.body.appendChild(b);
     }
     async function connectAws() {
-      const keyId  = document.getElementById('awsKeyId').value.trim();
+      const keyId = document.getElementById('awsKeyId').value.trim();
       const secret = document.getElementById('awsSecretKey').value.trim();
       const region = document.getElementById('awsRegionSel').value;
-      const al     = document.getElementById('awsConnectAlert');
-      const btn    = document.getElementById('awsConnectBtn');
+      const al = document.getElementById('awsConnectAlert');
+      const btn = document.getElementById('awsConnectBtn');
       if (!keyId || !secret) {
         al.className = 'af-alert show err-a';
         al.innerHTML = '⚠️ &nbsp; Both Access Key ID and Secret Access Key are required.';
@@ -2840,7 +3064,7 @@
       btn.classList.add('loading'); btn.disabled = true;
       al.className = 'af-alert';
       try {
-        const res  = await fetch(BASE_URL + '/api/aws/connect', {
+        const res = await fetch(BASE_URL + '/api/aws/connect', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
           body: JSON.stringify({ accessKeyId: keyId, secretAccessKey: secret, region }),
@@ -2909,18 +3133,18 @@
         const savingsEl = document.getElementById("savings");
         const resourcesEl = document.getElementById("resources");
 
-        if (spendEl)     spendEl.innerText     = "$" + (Math.abs(parseFloat(data.totalCost)) || 0).toFixed(2);
-        if (savingsEl)   savingsEl.innerText   = "$" + data.savings;
+        if (spendEl) spendEl.innerText = "$" + (Math.abs(parseFloat(data.totalCost)) || 0).toFixed(2);
+        if (savingsEl) savingsEl.innerText = "$" + data.savings;
         if (resourcesEl) resourcesEl.innerText = data.resources;
 
         // ── EC2 / S3 / RDS counts if elements exist ────────────
         const ec2El = document.getElementById("ec2Count");
-        const s3El  = document.getElementById("s3Count");
+        const s3El = document.getElementById("s3Count");
         const rdsEl = document.getElementById("rdsCount");
         const recEl = document.getElementById("recCount");
 
         if (ec2El) ec2El.innerText = data.ec2?.total ?? "-";
-        if (s3El)  s3El.innerText  = data.s3?.buckets ?? "-";
+        if (s3El) s3El.innerText = data.s3?.buckets ?? "-";
         if (rdsEl) rdsEl.innerText = data.rds?.instances ?? "-";
         if (recEl) recEl.innerText = data.openRecommendations ?? "-";
 
@@ -2973,7 +3197,7 @@
     function openNewAlertModal() {
       _modalMode = 'alert';
       document.getElementById('malTitle').textContent = '🔔 Create New Alert';
-      document.getElementById('malSub').textContent   = 'Set a custom spend threshold to be alerted when costs exceed your limit.';
+      document.getElementById('malSub').textContent = 'Set a custom spend threshold to be alerted when costs exceed your limit.';
       document.getElementById('newAlertModal').classList.add('on');
       document.getElementById('alertName').value = '';
       document.getElementById('alertThreshold').value = '';
@@ -2982,7 +3206,7 @@
     function openNewBudgetModal() {
       _modalMode = 'budget';
       document.getElementById('malTitle').textContent = '📊 Create Budget Rule';
-      document.getElementById('malSub').textContent   = 'Set a monthly spend limit for a service or total AWS cost.';
+      document.getElementById('malSub').textContent = 'Set a monthly spend limit for a service or total AWS cost.';
       document.getElementById('newAlertModal').classList.add('on');
       document.getElementById('alertName').value = '';
       document.getElementById('alertThreshold').value = '';
@@ -2992,10 +3216,10 @@
       document.getElementById('newAlertModal').classList.remove('on');
     }
     async function createNewAlert() {
-      const name      = document.getElementById('alertName').value.trim();
-      const service   = document.getElementById('alertService').value;
+      const name = document.getElementById('alertName').value.trim();
+      const service = document.getElementById('alertService').value;
       const threshold = parseFloat(document.getElementById('alertThreshold').value);
-      const errEl     = document.getElementById('newAlertErr');
+      const errEl = document.getElementById('newAlertErr');
       if (!name) { errEl.className = 'af-alert show err-a'; errEl.innerHTML = '⚠️ &nbsp; Alert name is required.'; return; }
       if (!threshold || threshold <= 0) { errEl.className = 'af-alert show err-a'; errEl.innerHTML = '⚠️ &nbsp; Enter a valid threshold amount.'; return; }
       const isBudget = (_modalMode === 'budget');
@@ -3016,7 +3240,7 @@
           body: JSON.stringify({ name, service, threshold })
         });
         if (isBudget) await loadCustomBudgets();
-      } catch(e) { console.log('Save error:', e); }
+      } catch (e) { console.log('Save error:', e); }
       showToast('✅ ' + (isBudget ? 'Budget "' : 'Alert "') + name + '" created!');
     }
     function showToast(msg) {
@@ -3031,9 +3255,9 @@
       const token = localStorage.getItem('token');
       if (!token) return;
       try {
-        const res  = await fetch(BASE_URL + '/api/user/alerts', { headers: { 'Authorization': 'Bearer ' + token } });
+        const res = await fetch(BASE_URL + '/api/user/alerts', { headers: { 'Authorization': 'Bearer ' + token } });
         const data = await res.json();
-        const el   = document.getElementById('alertsList');
+        const el = document.getElementById('alertsList');
         if (!el || !data.items?.length) return;
         // Remove previously appended custom alerts to avoid duplicates on refresh
         el.querySelectorAll('.custom-alert-row').forEach(r => r.remove());
@@ -3045,7 +3269,7 @@
           div.innerHTML = `<span style="font-size:15px;flex-shrink:0">🔵</span><div style="flex:1"><div class="ai-title" style="color:var(--sky)">${a.name}</div><div class="ai-body">${a.service} — threshold: $${a.threshold.toLocaleString()}/month</div></div><div class="ai-time">${new Date(a.createdAt).toLocaleDateString()}</div><button class="act-btn" style="margin-left:10px;color:var(--red);border-color:rgba(248,113,113,.2);flex-shrink:0" onclick="deleteCustomAlert('${a._id}', this)">✕ Delete</button>`;
           el.appendChild(div);
         });
-      } catch(e) { console.log('loadCustomAlerts:', e); }
+      } catch (e) { console.log('loadCustomAlerts:', e); }
     }
     // ── Delete a custom alert ────────────────────────────────────────────────────
     async function deleteCustomAlert(id, btn) {
@@ -3058,12 +3282,12 @@
         const row = btn.closest('.custom-alert-row');
         if (row) { row.style.opacity = '0'; row.style.transition = 'opacity .3s'; setTimeout(() => row.remove(), 300); }
         showToast('🗑️ Alert deleted.');
-      } catch(e) { btn.disabled = false; btn.textContent = '✕ Delete'; }
+      } catch (e) { btn.disabled = false; btn.textContent = '✕ Delete'; }
     }
     // ── Render individual EC2 instances ────────────────────────────────────────
     function renderEC2Instances(instances) {
-      const tbody  = document.getElementById('ec2InstanceTable');
-      const sumEl  = document.getElementById('ec2StatusSummary');
+      const tbody = document.getElementById('ec2InstanceTable');
+      const sumEl = document.getElementById('ec2StatusSummary');
       if (!tbody) return;
       if (!instances?.length) {
         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--tx2);padding:20px;font-family:var(--mono);font-size:11px">☁️ No EC2 instances found in this region.</td></tr>';
@@ -3073,13 +3297,13 @@
       const stopped = instances.filter(i => i.state === 'stopped').length;
       if (sumEl) sumEl.textContent = `${running} running • ${stopped} stopped • ${instances.length} total`;
       const stateStyle = (s) => {
-        if (s === 'running')    return 'color:var(--teal);font-weight:600';
-        if (s === 'stopped')    return 'color:var(--red);font-weight:600';
+        if (s === 'running') return 'color:var(--teal);font-weight:600';
+        if (s === 'stopped') return 'color:var(--red);font-weight:600';
         if (s === 'terminated') return 'color:var(--tx2)';
         return 'color:var(--gold);font-weight:600';
       };
       const stateIcon = (s) => s === 'running' ? '●' : s === 'stopped' ? '●' : '◌';
-      const fmt = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'2-digit' }) : '—';
+      const fmt = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' }) : '—';
       tbody.innerHTML = instances.map(i =>
         `<tr>
           <td><div class="rid">${i.name || '—'}</div></td>
@@ -3095,7 +3319,7 @@
       const token = localStorage.getItem('token');
       if (!token) return;
       try {
-        const res  = await fetch(BASE_URL + '/api/user/budgets', { headers: { 'Authorization': 'Bearer ' + token } });
+        const res = await fetch(BASE_URL + '/api/user/budgets', { headers: { 'Authorization': 'Bearer ' + token } });
         const data = await res.json();
         const tbody = document.getElementById('budgetBody');
         const badge = document.getElementById('budgetsBadge');
@@ -3121,14 +3345,14 @@
             const matchKey = Object.keys(svcCostMap).find(k => k.includes(svcLower) || svcLower.includes(k.split(' ').pop()));
             if (matchKey !== undefined) used = svcCostMap[matchKey];
           }
-          const rem   = Math.max(0, limit - used).toFixed(2);
-          const pct   = Math.min(Math.round(used / limit * 100), 100);
-          const clr   = pct > 85 ? 'var(--red)' : pct > 60 ? 'var(--gold)' : 'var(--teal)';
-          const tag   = pct > 85 ? '<span class="sev-tag sv-h">● Critical</span>' : pct > 60 ? '<span class="sev-tag sv-m">◑ Warning</span>' : '<span class="sev-tag sv-l">○ Healthy</span>';
+          const rem = Math.max(0, limit - used).toFixed(2);
+          const pct = Math.min(Math.round(used / limit * 100), 100);
+          const clr = pct > 85 ? 'var(--red)' : pct > 60 ? 'var(--gold)' : 'var(--teal)';
+          const tag = pct > 85 ? '<span class="sev-tag sv-h">● Critical</span>' : pct > 60 ? '<span class="sev-tag sv-m">◑ Warning</span>' : '<span class="sev-tag sv-l">○ Healthy</span>';
           return `<tr class="custom-budget-row"><td><div class="rid">${b.name}</div><div class="rtype">${b.service}</div></td><td style="color:var(--tx1);font-family:var(--mono);font-size:11px">$${limit.toLocaleString()}</td><td style="font-weight:600;font-family:var(--mono);font-size:11px">$${parseFloat(used).toFixed(2)}</td><td style="color:${clr};font-family:var(--mono);font-size:11px">$${rem}</td><td>${tag}</td><td><div class="prog bprog"><div class="prog-fill" style="background:${clr};width:${pct}%"></div></div></td><td><button class="act-btn" style="color:var(--red);border-color:rgba(248,113,113,.2)" onclick="deleteCustomBudget('${b._id}', this)">✕</button></td></tr>`;
         }).join('');
         tbody.insertAdjacentHTML('afterbegin', rows);
-      } catch(e) { console.log('loadCustomBudgets:', e); }
+      } catch (e) { console.log('loadCustomBudgets:', e); }
     }
     // ── Delete a custom budget ───────────────────────────────────────────────
     async function deleteCustomBudget(id, btn) {
@@ -3141,16 +3365,35 @@
         const row = btn.closest('.custom-budget-row');
         if (row) { row.style.opacity = '0'; row.style.transition = 'opacity .3s'; setTimeout(() => row.remove(), 300); }
         showToast('🗑️ Budget deleted.');
-      } catch(e) { btn.disabled = false; btn.textContent = '✕'; }
+      } catch (e) { btn.disabled = false; btn.textContent = '✕'; }
     }
+    function toggleTheme() {
+      const isLight = document.body.getAttribute('data-theme') === 'light';
+      document.body.setAttribute('data-theme', isLight ? 'dark' : 'light');
+      localStorage.setItem('theme', isLight ? 'dark' : 'light');
+      document.getElementById('themeBtn').innerHTML = isLight ? '<i data-lucide="sun" style="width:16px;height:16px"></i>' : '<i data-lucide="moon" style="width:16px;height:16px"></i>';
+      if (window.lucide) lucide.createIcons();
+    }
+
     window.onload = () => {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'light') {
+        document.body.setAttribute('data-theme', 'light');
+        const themeBtn = document.getElementById('themeBtn');
+        if (themeBtn) themeBtn.innerHTML = '<i data-lucide="moon" style="width:16px;height:16px"></i>';
+      }
+
       // ── Force login on every visit ──────────────────────────────────
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      
+
       setTimeout(() => document.getElementById('loader').classList.add('out'), 700);
       document.getElementById('auth').classList.add('show');
       document.getElementById('app').classList.remove('on');
+
+      if (window.lucide) {
+        lucide.createIcons();
+      }
     };
 
 

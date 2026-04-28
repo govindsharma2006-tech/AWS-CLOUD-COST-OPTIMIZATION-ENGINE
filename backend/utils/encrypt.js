@@ -2,8 +2,12 @@ const crypto = require("crypto");
 
 const ALGO = "aes-256-cbc";
 
-// Derive a 32-byte key from the secret. Falls back to a built-in default
-// so the app works without any .env change — set ENCRYPT_SECRET in production.
+// Enforce ENCRYPT_SECRET in production to prevent security vulnerabilities
+if (process.env.NODE_ENV === "production" && !process.env.ENCRYPT_SECRET) {
+  throw new Error("CRITICAL SECURITY ERROR: ENCRYPT_SECRET must be set in production environment variables.");
+}
+
+// Derive a 32-byte key from the secret.
 const KEY = crypto.scryptSync(
   process.env.ENCRYPT_SECRET || "cloudlens_default_enc_key_do_not_use_in_prod!",
   "cl_salt_v1",
