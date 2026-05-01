@@ -49,10 +49,15 @@ const getDashboardData = async (req, res) => {
 
   const userId = req.user._id.toString();
   const cacheKey = `dashboardData_${userId}`;
-  const cachedData = dashboardCache.get(cacheKey);
 
-  if (cachedData) {
-    return res.json({ ...cachedData, cached: true });
+  // Force-refresh: clear cache if requested
+  if (req.query.force === 'true') {
+    dashboardCache.del(cacheKey);
+  } else {
+    const cachedData = dashboardCache.get(cacheKey);
+    if (cachedData) {
+      return res.json({ ...cachedData, cached: true });
+    }
   }
 
   try {
@@ -142,11 +147,13 @@ const getDashboardData = async (req, res) => {
     } else { console.warn("EC2 skipped:", ec2Res.reason?.message); }
 
     // 4️⃣ EBS volumes
-    let volumeCount = 0, unattachedVolumes = 0;
+    let volumeCount = 0, unattachedVolumes = 0, unattachedEbsSavings = 0;
     if (ebsRes.status === "fulfilled") {
       const vols = ebsRes.value.Volumes || [];
       volumeCount       = vols.length;
-      unattachedVolumes = vols.filter(v => v.State === "available").length;
+      const availableVols = vols.filter(v => v.State === "available");
+      unattachedVolumes = availableVols.length;
+      unattachedEbsSavings = availableVols.reduce((sum, v) => sum + ((v.Size || 0) * 0.08), 0);
     } else { console.warn("EBS skipped:", ebsRes.reason?.message); }
 
     // 5️⃣ S3 buckets
@@ -193,11 +200,11 @@ const getDashboardData = async (req, res) => {
         .map(g => ({
           name: g.Keys[0], cost: parseFloat(g.Metrics.UnblendedCost.Amount).toFixed(2),
           pct: totalCostNum > 0 ? Math.round((parseFloat(g.Metrics.UnblendedCost.Amount) / totalCostNum) * 100) : 0,
-        })).sort((a, b) => b.cost - a.cost).slice(0, 4);
+        })).sort((a, b) => b.cost - a.cost); // No limit — show all active regions
     } else { console.warn("Region cost skipped:", regionRes.reason?.message); }
 
     const totalResources   = ec2Count + volumeCount + s3Count + rdsCount;
-    const estimatedSavings = (unattachedVolumes * 24 + stoppedEC2 * 15).toFixed(2);
+    const estimatedSavings = (unattachedEbsSavings + stoppedEC2 * 15).toFixed(2);
 
     // ── Email alert check (throttled: once per 24h per alert) ─────────────────────────
     try {

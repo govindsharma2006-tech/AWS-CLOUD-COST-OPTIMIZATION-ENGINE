@@ -2074,7 +2074,7 @@
           <button class="tb-btn" onclick="toggleTheme()" id="themeBtn"><i data-lucide="sun"
               style="width:16px;height:16px"></i></button>
           <button class="tb-btn" id="exportBtn" onclick="exportCSV()">⬇ Export</button>
-          <button class="tb-btn" id="refreshBtn" onclick="loadDashboard()">⟳ Refresh</button>
+          <button class="tb-btn" id="refreshBtn" onclick="refreshDashboard()">⟳ Refresh</button>
           <button class="tb-btn hi" id="newAlertBtn" onclick="openNewAlertModal()">+ New Alert</button>
         </div>
       </div>
@@ -2588,17 +2588,31 @@
     };
     const DONUT_COLORS = ['var(--sky)', 'var(--teal)', '#fcd34d', '#c084fc', '#f87171'];
     const REGION_META = {
-      'us-east-1': { flag: '🇺🇸', label: 'N. Virginia' },
-      'us-east-2': { flag: '🇺🇸', label: 'Ohio' },
-      'us-west-1': { flag: '🇺🇸', label: 'N. California' },
-      'us-west-2': { flag: '🇺🇸', label: 'Oregon' },
-      'eu-west-1': { flag: '🇪🇺', label: 'Ireland' },
-      'eu-west-2': { flag: '🇪🇺', label: 'London' },
-      'eu-central-1': { flag: '🇩🇪', label: 'Frankfurt' },
+      'us-east-1':      { flag: '🇺🇸', label: 'N. Virginia' },
+      'us-east-2':      { flag: '🇺🇸', label: 'Ohio' },
+      'us-west-1':      { flag: '🇺🇸', label: 'N. California' },
+      'us-west-2':      { flag: '🇺🇸', label: 'Oregon' },
+      'eu-west-1':      { flag: '🇮🇪', label: 'Ireland' },
+      'eu-west-2':      { flag: '🇬🇧', label: 'London' },
+      'eu-west-3':      { flag: '🇫🇷', label: 'Paris' },
+      'eu-central-1':   { flag: '🇩🇪', label: 'Frankfurt' },
+      'eu-north-1':     { flag: '🇸🇪', label: 'Stockholm' },
+      'eu-south-1':     { flag: '🇮🇹', label: 'Milan' },
+      'ap-south-1':     { flag: '🇮🇳', label: 'Mumbai' },
+      'ap-south-2':     { flag: '🇮🇳', label: 'Hyderabad' },
       'ap-southeast-1': { flag: '🇸🇬', label: 'Singapore' },
       'ap-southeast-2': { flag: '🇦🇺', label: 'Sydney' },
+      'ap-southeast-3': { flag: '🇮🇩', label: 'Jakarta' },
       'ap-northeast-1': { flag: '🇯🇵', label: 'Tokyo' },
-      'ap-south-1': { flag: '🇮🇳', label: 'Mumbai' },
+      'ap-northeast-2': { flag: '🇰🇷', label: 'Seoul' },
+      'ap-northeast-3': { flag: '🇯🇵', label: 'Osaka' },
+      'ap-east-1':      { flag: '🇭🇰', label: 'Hong Kong' },
+      'ca-central-1':   { flag: '🇨🇦', label: 'Canada' },
+      'sa-east-1':      { flag: '🇧🇷', label: 'São Paulo' },
+      'me-south-1':     { flag: '🇧🇭', label: 'Bahrain' },
+      'me-central-1':   { flag: '🇦🇪', label: 'UAE' },
+      'af-south-1':     { flag: '🇿🇦', label: 'Cape Town' },
+      'il-central-1':   { flag: '🇮🇱', label: 'Israel' },
     };
     // ─────────────────────────────────────────────────────────────────────────
     function showAlert(msg, type = 'err-a') { const el = document.getElementById('authAlert'); el.className = 'af-alert show ' + type; el.innerHTML = (type === 'err-a' ? '⚠️' : '✅') + ' &nbsp; ' + msg; }
@@ -2715,8 +2729,10 @@
     function recRow(r) { return `<tr><td><div class="rid">${r.id}</div><div class="rtype">${r.type}</div></td><td style="max-width:200px;font-size:11px;color:var(--tx1);line-height:1.45">${r.finding}</td><td><span class="sev-tag ${sevCls(r.sev)}">${sevLbl(r.sev)}</span></td><td><span class="sav-val">${r.sav}</span><span class="sav-unit">/mo</span></td><td><div style="display:flex;align-items:center;gap:7px"><div class="util-bar"><div class="util-fill" style="width:${r.util}%;background:${utilClr(r.util)}"></div></div><span style="font-family:var(--mono);font-size:9px;color:var(--tx2)">${r.util}%</span></div></td><td><button class="act-btn" onclick="applyRec(this)">Apply →</button></td></tr>` }
     function buildRecsFromData(data) {
       const built = [];
-      if (data.ec2?.stopped > 0) built.push({ id: 'ec2-stopped', type: `EC2 · ${data.ec2.stopped} instance(s)`, finding: `${data.ec2.stopped} stopped instance(s) — terminate to avoid ongoing charges`, sev: 'h', sav: '$' + (data.ec2.stopped * 15), util: 0 });
-      if (data.ebs?.unattached > 0) built.push({ id: 'ebs-unattached', type: `EBS · ${data.ebs.unattached} volume(s)`, finding: `${data.ebs.unattached} unattached EBS volume(s) — delete if no longer needed`, sev: 'h', sav: '$' + (data.ebs.unattached * 24), util: 0 });
+      const stoppedSav = (data.ec2?.stopped || 0) * 15;
+      const ebsSav = parseFloat(data.savings || 0) - stoppedSav;
+      if (data.ec2?.stopped > 0) built.push({ id: 'ec2-stopped', type: `EC2 · ${data.ec2.stopped} instance(s)`, finding: `${data.ec2.stopped} stopped instance(s) — terminate to avoid ongoing charges`, sev: 'h', sav: '$' + stoppedSav.toFixed(2), util: 0 });
+      if (data.ebs?.unattached > 0) built.push({ id: 'ebs-unattached', type: `EBS · ${data.ebs.unattached} volume(s)`, finding: `${data.ebs.unattached} unattached EBS volume(s) — delete if no longer needed`, sev: 'h', sav: '$' + Math.max(ebsSav, 0).toFixed(2), util: 0 });
       return built;
     }
     let _allRecs = []; let _recPage = 0; const _recPerPage = 5;
@@ -2850,7 +2866,7 @@
       if (!el || !data) return;
       const alerts = [];
       if (data.ec2?.stopped > 0) alerts.push({ icon: '🔴', color: 'var(--red)', bdr: 'rgba(248,113,113,.14)', title: `${data.ec2.stopped} Stopped EC2 Instance(s)`, body: `${data.ec2.stopped} instance(s) stopped — still incurring EBS charges. Terminate if unused.`, time: 'Now' });
-      if (data.ebs?.unattached > 0) alerts.push({ icon: '🟡', color: 'var(--gold)', bdr: 'rgba(252,211,77,.12)', title: `Unattached EBS Volumes (${data.ebs.unattached})`, body: `${data.ebs.unattached} volume(s) unattached — est. $${(data.ebs.unattached * 24).toFixed(0)}/month wasted spend`, time: '1 hr ago' });
+      if (data.ebs?.unattached > 0) alerts.push({ icon: '🟡', color: 'var(--gold)', bdr: 'rgba(252,211,77,.12)', title: `Unattached EBS Volumes (${data.ebs.unattached})`, body: `${data.ebs.unattached} volume(s) unattached — est. $${parseFloat(data.savings || 0).toFixed(2)}/month wasted spend`, time: '1 hr ago' });
       if (parseFloat(data.savings) > 0) alerts.push({ icon: '🟢', color: 'var(--teal)', bdr: 'rgba(45,212,191,.14)', title: `$${data.savings} in Potential Savings Identified`, body: `${data.openRecommendations} optimization opportunities — right-sizing, idle cleanup and more.`, time: 'This session' });
       if (!alerts.length) alerts.push({ icon: '🟢', color: 'var(--teal)', bdr: 'rgba(45,212,191,.14)', title: 'All Systems Healthy', body: 'No critical issues detected. CloudLens monitors your infrastructure continuously.', time: 'Now' });
       el.innerHTML = alerts.map(a =>
@@ -2863,10 +2879,14 @@
     function renderRegions(data) {
       const el = document.getElementById('regionsGrid');
       if (!el || !data?.costByRegion?.length) return;
-      const colors = ['var(--sky)', 'var(--teal)', 'var(--gold)', 'var(--violet)'];
+      // Extended palette — cycles for any number of regions
+      const colors = ['var(--sky)', 'var(--teal)', 'var(--gold)', 'var(--violet)', '#f472b6', '#f87171', '#34d399', '#60a5fa', '#fb923c', '#a78bfa'];
+      // Update sidebar badge with real count
+      const rBadge = document.getElementById('regionsBadge');
+      if (rBadge) rBadge.textContent = data.costByRegion.length;
       el.innerHTML = data.costByRegion.map((r, i) => {
         const meta = REGION_META[r.name] || { flag: '🌍', label: r.name };
-        const color = colors[i] || 'var(--sky)';
+        const color = colors[i % colors.length]; // cycle colors if > 10 regions
         return `<div class="kpi" style="--kg:${color};--kglow:rgba(96,184,245,.07);--kibg:var(--sky-dim)">` +
           `<div class="kpi-row"><div class="kpi-icon">${meta.flag}</div><div class="kpi-badge bnt">${r.pct}%</div></div>` +
           `<div class="kpi-val" style="--kc:${color}">$${parseFloat(r.cost).toLocaleString()}</div>` +
@@ -3116,11 +3136,18 @@
       } catch (e) { console.error('Disconnect error:', e); }
       btn.classList.remove('loading'); btn.disabled = false;
     }
-    async function loadDashboard() {
+    async function refreshDashboard() {
+      const btn = document.getElementById('refreshBtn');
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ Refreshing...'; }
+      await loadDashboard(true);
+      if (btn) { btn.disabled = false; btn.textContent = '⟳ Refresh'; }
+      showToast('✅ Dashboard refreshed with latest AWS data!');
+    }
+    async function loadDashboard(force = false) {
       const token = localStorage.getItem("token");
-
+      const url = BASE_URL + "/api/aws/dashboard" + (force ? '?force=true' : '');
       try {
-        const res = await fetch(BASE_URL + "/api/aws/dashboard", {
+        const res = await fetch(url, {
           headers: { "Authorization": "Bearer " + token }
         });
 
